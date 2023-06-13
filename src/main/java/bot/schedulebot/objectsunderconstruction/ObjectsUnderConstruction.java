@@ -12,10 +12,12 @@ import java.util.concurrent.Exchanger;
 @Getter
 @Setter
 public abstract class ObjectsUnderConstruction<T> {
-    private Map<String, T> objectsUnderConstructions;
-    private Map<String, Exchanger<Update>> exchangers;
+    protected Map<String, T> objectsUnderConstructions;
+    protected Map<String, Exchanger<Update>> exchangers;
+    protected Map<String, Exchanger<Update>> editExchangers;
     public ObjectsUnderConstruction() {
         this.objectsUnderConstructions = new HashMap<>();
         this.exchangers = new HashMap<>();
+        this.editExchangers = new HashMap<>();
     }
 }

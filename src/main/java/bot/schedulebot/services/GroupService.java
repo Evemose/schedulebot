@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service
-public class GroupService extends Service {
+public class GroupService extends Service<Group> {
 
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
@@ -38,6 +38,7 @@ public class GroupService extends Service {
     private final BotConfig botConfig;
 
     public GroupService(UserRepository userRepository, GroupRepository groupRepository, MenuStorage menuStorage, GroupsUnderConstruction groupAdditionHelper, ParseUtil parseUtil, TaskService taskService, SubjectRepository subjectRepository, AnnouncementRepository announcementRepository, TimersStorage timersStorage, NotificationRepository notificationRepository) {
+        super(groupRepository, parseUtil, groupAdditionHelper);
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.menuStorage = menuStorage;
@@ -51,7 +52,7 @@ public class GroupService extends Service {
         botConfig = new BotConfig();
     }
 
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Object entity) {
+    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Group entity) {
         List<Message> messages = new ArrayList<>();
         Session session = HibernateConfig.getSession();
         User user = userRepository.get(parseUtil.getTag(update), session);

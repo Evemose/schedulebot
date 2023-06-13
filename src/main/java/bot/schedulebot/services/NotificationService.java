@@ -39,7 +39,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 @Service
-public class NotificationService extends bot.schedulebot.services.Service {
+public class NotificationService extends bot.schedulebot.services.Service<Notification> {
     private final NotificationsUnderConstruction notificationsUnderConstruction;
     private final ParseUtil parseUtil;
     private final UserRepository userRepository;
@@ -50,7 +50,8 @@ public class NotificationService extends bot.schedulebot.services.Service {
     private final KeyboardGenerator keyboardGenerator;
     private final TimersStorage timersStorage;
 
-    public NotificationService(NotificationsUnderConstruction notificationsUnderConstruction, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, GroupRepository groupRepository, NotificationRepository notificationRepository, KeyboardGenerator keyboardGenerator, TimersStorage timersStorage) {
+    NotificationService(NotificationsUnderConstruction notificationsUnderConstruction, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, GroupRepository groupRepository, NotificationRepository notificationRepository, KeyboardGenerator keyboardGenerator, TimersStorage timersStorage) {
+        super(notificationRepository, parseUtil, notificationsUnderConstruction);
         this.notificationsUnderConstruction = notificationsUnderConstruction;
         this.parseUtil = parseUtil;
         this.userRepository = userRepository;
@@ -62,7 +63,7 @@ public class NotificationService extends bot.schedulebot.services.Service {
         this.timersStorage = timersStorage;
     }
 
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Object entity) {
+    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Notification entity) {
         User user = this.userRepository.get(this.parseUtil.getTag(update));
         List<Message> messages = new ArrayList();
         Message message;

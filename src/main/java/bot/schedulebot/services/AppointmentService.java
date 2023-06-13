@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @org.springframework.stereotype.Service
-public class AppointmentService extends Service {
+public class AppointmentService extends Service<Appointment> {
     private final ObjectsUnderConstruction appointmentObjectsUnderConstruction;
     private final AppointmentRepository appointmentRepository;
     private final UnappointedTaskRepository unappointedTaskRepository;
@@ -43,6 +43,7 @@ public class AppointmentService extends Service {
     private final AppointmentsUnderConstruction appointmentsUnderConstruction;
 
     public AppointmentService(AppointmentsUnderConstruction appointmentAdditionHelper, AppointmentRepository appointmentRepository, UnappointedTaskRepository unappointedTaskRepository, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, KeyboardGenerator keyboardGenerator, TodayTasksInfoRepository todayTasksInfoRepository, TodayTasksInfoService todayTasksInfoService, TaskRepository taskRepository, TasksUnderConstruction tasksUnderConstruction, AppointmentsUnderConstruction appointmentsUnderConstruction) {
+        super(appointmentRepository, parseUtil, appointmentsUnderConstruction);
         this.appointmentObjectsUnderConstruction = appointmentAdditionHelper;
         this.appointmentRepository = appointmentRepository;
         this.unappointedTaskRepository = unappointedTaskRepository;
@@ -59,7 +60,7 @@ public class AppointmentService extends Service {
     }
 
     @Override
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Object entity) {
+    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Appointment entity) {
         List<Message> messages = new ArrayList<>();
 
         switch (instanceAdditionStage) {

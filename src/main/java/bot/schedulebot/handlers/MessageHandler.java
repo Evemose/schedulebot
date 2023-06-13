@@ -2,7 +2,6 @@ package bot.schedulebot.handlers;
 
 import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.repositories.UserRepository;
-import bot.schedulebot.services.MainService;
 import bot.schedulebot.services.Service;
 import bot.schedulebot.storages.menustorages.MenuStorage;
 import bot.schedulebot.util.ParseUtil;
@@ -18,10 +17,10 @@ public class MessageHandler {
     private final CommandHandler commandHandler;
     private final MenuStorage menuStorage;
     private final UserRepository userRepository;
-    private final Service mainService;
+    private final ServiceController mainService;
     private final CallbackQueryHandler callbackQueryHandler;
 
-    public MessageHandler(CommandHandler commandHandler, MenuStorage menuStorage, UserRepository userRepository, MainService mainAdditionHandler, ParseUtil parseUtil, CallbackQueryHandler callbackQueryHandler) {
+    public MessageHandler(CommandHandler commandHandler, MenuStorage menuStorage, UserRepository userRepository, ServiceController mainAdditionHandler, ParseUtil parseUtil, CallbackQueryHandler callbackQueryHandler) {
         this.commandHandler = commandHandler;
         this.menuStorage = menuStorage;
         this.userRepository = userRepository;

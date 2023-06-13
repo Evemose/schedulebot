@@ -15,7 +15,6 @@ import bot.schedulebot.util.ParseUtil;
 import bot.schedulebot.util.ThreadUtil;
 import org.hibernate.Session;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.scheduling.annotation.Async;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
@@ -34,6 +33,7 @@ public class SubjectService extends Service<Subject> {
     private final BotConfig botConfig;
 
     SubjectService(UserRepository userRepository, SubjectRepository subjectRepository, ParseUtil parseUtil, MenuStorage menuStorage, GroupRepository groupRepository, SubjectsUnderConstruction subjectAdditionHelper, ThreadUtil threadUtil) {
+        super(subjectRepository, parseUtil, subjectAdditionHelper);
         this.userRepository = userRepository;
         this.subjectRepository = subjectRepository;
         this.parseUtil = parseUtil;

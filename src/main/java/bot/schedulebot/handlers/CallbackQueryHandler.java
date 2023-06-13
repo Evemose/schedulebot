@@ -24,7 +24,7 @@ import java.util.List;
 public class CallbackQueryHandler {
     private final UserRepository userRepository;
     private final MenuStorage menuStorage;
-    private final MainService mainService;
+    private final ServiceController serviceController;
     private final ParseUtil parseUtil;
     private final AppointmentsUnderConstruction appointmentsUnderConstruction;
     private final BotConfig botConfig;
@@ -37,10 +37,10 @@ public class CallbackQueryHandler {
     private final SubjectService subjectService;
     private final GroupMenuStorage groupMenuStorage;
 
-    public CallbackQueryHandler(UserRepository userRepository, MenuStorage menuStorage, MainService mainService, ParseUtil parseUtil, AppointmentsUnderConstruction appointmentsUnderConstruction, GroupService groupService, AppointmentService appointmentService, TaskService taskService, AnnouncementService announcementService, TodayTasksInfoRepository todayTasksInfoRepository, NotificationService notificationService, SubjectService subjectService, GroupMenuStorage groupMenuStorage) {
+    public CallbackQueryHandler(UserRepository userRepository, MenuStorage menuStorage, ServiceController serviceController, ParseUtil parseUtil, AppointmentsUnderConstruction appointmentsUnderConstruction, GroupService groupService, AppointmentService appointmentService, TaskService taskService, AnnouncementService announcementService, TodayTasksInfoRepository todayTasksInfoRepository, NotificationService notificationService, SubjectService subjectService, GroupMenuStorage groupMenuStorage) {
         this.userRepository = userRepository;
         this.menuStorage = menuStorage;
-        this.mainService = mainService;
+        this.serviceController = serviceController;
         this.parseUtil = parseUtil;
         this.appointmentsUnderConstruction = appointmentsUnderConstruction;
         this.botConfig = new BotConfig();
@@ -70,20 +70,20 @@ public class CallbackQueryHandler {
                 resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUPS_INDEX_MENU, update));
             }
             case "Create group" -> {
-                resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.GROUP_START, update, null));
+                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.GROUP_START, update, null));
             }
             case "Show group join menu" -> {
                 groupMenuStorage.handleGroupJoinMenuProvision(update, resultMessagesList);
             }
             case "Task appointment yes" -> {
-                resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.APPOINTMENT_DATE, update, null));
+                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_DATE, update, null));
             }
             case "Task appointment no" -> {
                 appointmentsUnderConstruction.getObjectsUnderConstructions().get(update.getCallbackQuery().getFrom().getUserName()).setId(-1);
-                resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, null));
+                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, null));
             }
             case "Task set image no" -> {
-                resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.TASK_NAME_NO_IMAGE, update, null));
+                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_NAME_NO_IMAGE, update, null));
             }
             case "Task set image yes" -> {
                 taskService.handleTaskSetImageYes(resultMessagesList, u);
@@ -92,10 +92,10 @@ public class CallbackQueryHandler {
                 taskService.handleTaskSetDocumentYes(resultMessagesList, u);
             }
             case "Task set document no" -> {
-                resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.TASK_IMAGE_NO_FILE, update, null));
+                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_IMAGE_NO_FILE, update, null));
             }
             case "Announcement set image no", "Announcement set document no", "Announcement set document yes", "Announcement set image yes" -> {
-                mainService.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_TITLE, update, null);
+                serviceController.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_TITLE, update, null);
             }
             case "Delete this" -> {
                 botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
@@ -154,7 +154,7 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Transfer ownership of \\d+ to \\d+")) {
                     groupService.handleOwnershipTransfer(update, resultMessagesList, callbackData, u);
                 } else if (callbackData.matches("Set subject \\d+")) {
-                    resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.TASK_SUBJECT, update, null));
+                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_SUBJECT, update, null));
                 } else if (callbackData.matches("Leave group \\d+")) {
                     groupService.handleGroupLeave(update, resultMessagesList, callbackData, u);
                 } else if (callbackData.matches("Show group code \\d+")) {
@@ -164,11 +164,11 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Appoint unappointed task in group \\d+")) {
                     u.setGroupMode(true);
                     userRepository.update(u);
-                    resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, null));
+                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, null));
                 } else if (callbackData.matches("Appoint unappointed task of user \\d+")) {
                     u.setGroupMode(false);
                     userRepository.update(u);
-                    resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, null));
+                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, null));
                 } else if (callbackData.matches("Show unappointed tasks of \\d+")) {
                     u.setGroupMode(false);
                     userRepository.update(u);
@@ -215,7 +215,7 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Delete announcement \\d+")) {
                     announcementService.handleAnnouncementDeletion(update, resultMessagesList, callbackData, u);
                 } else if (callbackData.startsWith("Change")) {
-                    mainService.handlePropertyChange(update, resultMessagesList, callbackData, u);
+                    serviceController.handlePropertyChange(update, resultMessagesList, callbackData, u);
                 } else if (callbackData.matches("Mark announcement as important \\d+")) {
                     announcementService.handleMarkAnnouncementAsImportant(update, resultMessagesList, callbackData);
                 } else if (callbackData.matches("Show important info in group \\d+")) {
@@ -272,9 +272,9 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Add notification to \\d+")) {
                     u.setGroupMode(true);
                     userRepository.update(u);
-                    resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.NOTIFICATION_START, update, null));
+                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_START, update, null));
                 } else if (callbackData.matches("Notification \\d{4}-\\d{2}-\\d{2}")) {
-                    resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.NOTIFICATION_DATE, update, null));
+                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_DATE, update, null));
                 } else if (callbackData.matches("Show notification \\d+")) {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.SHOW_NOTIFICATION_MENU, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Delete notification \\d+")) {

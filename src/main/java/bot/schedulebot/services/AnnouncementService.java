@@ -44,6 +44,7 @@ public class AnnouncementService extends Service<Announcement> {
     private final TextGenerator textGenerator;
 
     public AnnouncementService(AnnouncementsUnderConstruction announcementsUnderConstruction, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, MenuStorage menuStorage, Converter converter, AnnouncementRepository announcementRepository, Notificator notificator, FileRepository fileRepository, ThreadUtil threadUtil, TextGenerator textGenerator) {
+        super(announcementRepository, parseUtil, announcementsUnderConstruction);
         this.announcementsUnderConstruction = announcementsUnderConstruction;
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;

@@ -1,4 +1,4 @@
-package bot.schedulebot.services;
+package bot.schedulebot.handlers;
 
 import bot.schedulebot.entities.User;
 import bot.schedulebot.enums.InstanceAdditionStage;
@@ -6,6 +6,7 @@ import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.objectsunderconstruction.AnnouncementsUnderConstruction;
 import bot.schedulebot.objectsunderconstruction.SubjectsUnderConstruction;
 import bot.schedulebot.repositories.UserRepository;
+import bot.schedulebot.services.*;
 import bot.schedulebot.storages.menustorages.MenuStorage;
 import bot.schedulebot.util.ParseUtil;
 import org.springframework.stereotype.Controller;
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.concurrent.Exchanger;
 
 @Controller
-public class MainService extends Service {
+public class ServiceController {
     private final SubjectService subjectService;
     private final TaskService taskService;
     private final GroupService groupService;
@@ -30,7 +31,7 @@ public class MainService extends Service {
     private final SubjectsUnderConstruction subjectsUnderConstruction;
     private final AnnouncementsUnderConstruction announcementsUnderConstruction;
 
-    public MainService(SubjectService subjectAdditionHandler, TaskService taskAdditionHandler, GroupService groupAdditionHandler, AppointmentService appointmentAdditionHandler, UserRepository userRepository, ParseUtil parseUtil, MenuStorage menuStorage, AnnouncementService announcementService, NotificationService notificationService, SubjectsUnderConstruction subjectsUnderConstruction, AnnouncementsUnderConstruction announcementsUnderConstruction) {
+    public ServiceController(SubjectService subjectAdditionHandler, TaskService taskAdditionHandler, GroupService groupAdditionHandler, AppointmentService appointmentAdditionHandler, UserRepository userRepository, ParseUtil parseUtil, MenuStorage menuStorage, AnnouncementService announcementService, NotificationService notificationService, SubjectsUnderConstruction subjectsUnderConstruction, AnnouncementsUnderConstruction announcementsUnderConstruction) {
         this.subjectService = subjectAdditionHandler;
         this.taskService = taskAdditionHandler;
         this.groupService = groupAdditionHandler;
@@ -44,7 +45,7 @@ public class MainService extends Service {
         this.announcementsUnderConstruction = announcementsUnderConstruction;
     }
 
-    @Override
+
     public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Object entity) {
         List<Message> messages = new ArrayList<>();
         if (update.hasCallbackQuery() || (update.hasMessage() && update.getMessage().getText() != null) &&

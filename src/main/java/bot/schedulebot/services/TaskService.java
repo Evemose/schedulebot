@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @org.springframework.stereotype.Service
-public class TaskService extends Service {
+public class TaskService extends Service<Task> {
     private final UserRepository userRepository;
     private final ParseUtil parseUtil;
     private final GroupRepository groupRepository;
@@ -52,6 +52,7 @@ public class TaskService extends Service {
     private final TasksUnderConstruction tasksUnderConstruction;
 
     public TaskService(UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, TasksUnderConstruction taskAdditionHelper, SubjectRepository subjectRepository, UnappointedTaskRepository unappointedTaskRepository, MenuStorage menuStorage, TaskRepository taskRepository, AppointmentRepository appointmentRepository, Converter converter, FileRepository fileRepository, AppointmentsUnderConstruction appointmentsUnderConstruction, Notificator notificator, TodayTasksInfoService todayTasksInfoService, TodayTasksInfoRepository todayTasksInfoRepository, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, TasksUnderConstruction tasksUnderConstruction) {
+        super(taskRepository, parseUtil, tasksUnderConstruction);
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
         this.groupRepository = groupRepository;
@@ -73,7 +74,7 @@ public class TaskService extends Service {
         this.tasksUnderConstruction = tasksUnderConstruction;
     }
 
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Object entity) {
+    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Task entity) {
         List<Message> messages = new ArrayList<>();
         User user = userRepository.get(parseUtil.getTag(update));
 
