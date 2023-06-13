@@ -40,11 +40,10 @@ public class AnnouncementService extends Service<Announcement> {
     private final Notificator notificator;
     private final FileRepository fileRepository;
     private final BotConfig botConfig;
-    private final ThreadUtil threadUtil;
     private final TextGenerator textGenerator;
 
     public AnnouncementService(AnnouncementsUnderConstruction announcementsUnderConstruction, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, MenuStorage menuStorage, Converter converter, AnnouncementRepository announcementRepository, Notificator notificator, FileRepository fileRepository, ThreadUtil threadUtil, TextGenerator textGenerator) {
-        super(announcementRepository, parseUtil, announcementsUnderConstruction);
+        super(announcementRepository, threadUtil, parseUtil, announcementsUnderConstruction, menuStorage, converter);
         this.announcementsUnderConstruction = announcementsUnderConstruction;
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
@@ -54,7 +53,6 @@ public class AnnouncementService extends Service<Announcement> {
         this.announcementRepository = announcementRepository;
         this.notificator = notificator;
         this.fileRepository = fileRepository;
-        this.threadUtil = threadUtil;
         this.botConfig = new BotConfig();
         this.textGenerator = textGenerator;
     }

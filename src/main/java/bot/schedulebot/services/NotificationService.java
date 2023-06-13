@@ -18,7 +18,9 @@ import bot.schedulebot.repositories.GroupRepository;
 import bot.schedulebot.repositories.NotificationRepository;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.MenuStorage;
+import bot.schedulebot.util.Converter;
 import bot.schedulebot.util.ParseUtil;
+import bot.schedulebot.util.ThreadUtil;
 import bot.schedulebot.util.TimersStorage;
 import bot.schedulebot.util.generators.KeyboardGenerator;
 import java.time.DateTimeException;
@@ -50,8 +52,8 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
     private final KeyboardGenerator keyboardGenerator;
     private final TimersStorage timersStorage;
 
-    NotificationService(NotificationsUnderConstruction notificationsUnderConstruction, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, GroupRepository groupRepository, NotificationRepository notificationRepository, KeyboardGenerator keyboardGenerator, TimersStorage timersStorage) {
-        super(notificationRepository, parseUtil, notificationsUnderConstruction);
+    NotificationService(NotificationsUnderConstruction notificationsUnderConstruction, Converter converter, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, GroupRepository groupRepository, NotificationRepository notificationRepository, KeyboardGenerator keyboardGenerator, TimersStorage timersStorage, ThreadUtil threadUtil) {
+        super(notificationRepository, threadUtil, parseUtil, notificationsUnderConstruction, menuStorage, converter);
         this.notificationsUnderConstruction = notificationsUnderConstruction;
         this.parseUtil = parseUtil;
         this.userRepository = userRepository;
@@ -65,22 +67,22 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
 
     public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Notification entity) {
         User user = this.userRepository.get(this.parseUtil.getTag(update));
-        List<Message> messages = new ArrayList();
+        List<Message> messages = new ArrayList<>();
         Message message;
         switch (instanceAdditionStage) {
-            case NOTIFICATION_START:
+            case NOTIFICATION_START -> {
                 this.handleNotificationAdditionStart(user, update);
                 messages.add(this.menuStorage.getMenu(MenuMode.ADD_NOTIFICATION, update));
-                break;
-            case NOTIFICATION_TEXT:
+            }
+            case NOTIFICATION_TEXT -> {
                 this.handleNotificationTextSet(user, update);
                 messages.add(this.menuStorage.getMenu(MenuMode.SET_NOTIFICATION_TEXT, update));
-                break;
-            case NOTIFICATION_DATE:
+            }
+            case NOTIFICATION_DATE -> {
                 this.handleNotificationDateSet(user, update);
                 messages.add(this.menuStorage.getMenu(MenuMode.SET_NOTIFICATION_DATE, update));
-                break;
-            case NOTIFICATION_TIME:
+            }
+            case NOTIFICATION_TIME -> {
                 try {
                     this.handleNotificationTimeSet(user, update);
                     messages.add(this.menuStorage.getMenu(MenuMode.SET_NOTIFICATION_TIME, update));
@@ -89,8 +91,8 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
                     message.setText("Incorrect time format. Try again");
                     messages.add(message);
                 }
-                break;
-            case NOTIFICATION_FREQUENCY:
+            }
+            case NOTIFICATION_FREQUENCY -> {
                 try {
                     int id = this.handleNotificationFrequencySet(user, update);
                     messages.add(this.menuStorage.getMenu(MenuMode.SET_NOTIFICATION_FREQUENCY, update));
@@ -100,9 +102,8 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
                     message.setText(var9.getMessage());
                     messages.add(message);
                 }
-                break;
-            default:
-                throw new RuntimeException("Wrong addition stage (notification)");
+            }
+            default -> throw new RuntimeException("Wrong addition stage (notification)");
         }
 
         if (this.notificationsUnderConstruction.getEditOrNewNotification().get(this.parseUtil.getTag(update)) != null && ((EditOrNew)this.notificationsUnderConstruction.getEditOrNewNotification().get(this.parseUtil.getTag(update))).equals(EditOrNew.EDIT)) {

@@ -2,7 +2,6 @@ package bot.schedulebot.handlers;
 
 import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.repositories.UserRepository;
-import bot.schedulebot.services.Service;
 import bot.schedulebot.storages.menustorages.MenuStorage;
 import bot.schedulebot.util.ParseUtil;
 import org.springframework.stereotype.Controller;
@@ -41,7 +40,7 @@ public class MessageHandler {
                 if (!update.getMessage().getFrom().getUserName().equals("schedule_toDobot"))
                     return mainService.handleAddition(
                             userRepository.get(update.getMessage().getFrom().getUserName()).getInstanceAdditionStage(),
-                            update, null);
+                            update, userRepository.get(update.getMessage().getFrom().getUserName()).getMode());
             }
         } else if (update.hasCallbackQuery()) {
             return callbackQueryHandler.handleCallbackQuery(update);

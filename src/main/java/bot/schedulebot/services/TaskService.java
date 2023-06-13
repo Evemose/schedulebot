@@ -14,6 +14,7 @@ import bot.schedulebot.storages.menustorages.MenuStorage;
 import bot.schedulebot.util.Converter;
 import bot.schedulebot.util.Notificator;
 import bot.schedulebot.util.ParseUtil;
+import bot.schedulebot.util.ThreadUtil;
 import bot.schedulebot.util.generators.KeyboardGenerator;
 import bot.schedulebot.util.generators.TextGenerator;
 import org.hibernate.Session;
@@ -51,8 +52,8 @@ public class TaskService extends Service<Task> {
     private final BotConfig botConfig;
     private final TasksUnderConstruction tasksUnderConstruction;
 
-    public TaskService(UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, TasksUnderConstruction taskAdditionHelper, SubjectRepository subjectRepository, UnappointedTaskRepository unappointedTaskRepository, MenuStorage menuStorage, TaskRepository taskRepository, AppointmentRepository appointmentRepository, Converter converter, FileRepository fileRepository, AppointmentsUnderConstruction appointmentsUnderConstruction, Notificator notificator, TodayTasksInfoService todayTasksInfoService, TodayTasksInfoRepository todayTasksInfoRepository, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, TasksUnderConstruction tasksUnderConstruction) {
-        super(taskRepository, parseUtil, tasksUnderConstruction);
+    public TaskService(UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, TasksUnderConstruction taskAdditionHelper, SubjectRepository subjectRepository, UnappointedTaskRepository unappointedTaskRepository, MenuStorage menuStorage, TaskRepository taskRepository, AppointmentRepository appointmentRepository, Converter converter, FileRepository fileRepository, AppointmentsUnderConstruction appointmentsUnderConstruction, Notificator notificator, TodayTasksInfoService todayTasksInfoService, TodayTasksInfoRepository todayTasksInfoRepository, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, TasksUnderConstruction tasksUnderConstruction, ThreadUtil threadUtil) {
+        super(taskRepository, threadUtil, parseUtil, tasksUnderConstruction, menuStorage, converter);
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
         this.groupRepository = groupRepository;

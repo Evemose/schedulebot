@@ -11,6 +11,7 @@ import bot.schedulebot.repositories.GroupRepository;
 import bot.schedulebot.repositories.SubjectRepository;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.MenuStorage;
+import bot.schedulebot.util.Converter;
 import bot.schedulebot.util.ParseUtil;
 import bot.schedulebot.util.ThreadUtil;
 import org.hibernate.Session;
@@ -29,18 +30,16 @@ public class SubjectService extends Service<Subject> {
     private final MenuStorage menuStorage;
     private final GroupRepository groupRepository;
     private final SubjectsUnderConstruction subjectAdditionHelper;
-    private final ThreadUtil threadUtil;
     private final BotConfig botConfig;
 
-    SubjectService(UserRepository userRepository, SubjectRepository subjectRepository, ParseUtil parseUtil, MenuStorage menuStorage, GroupRepository groupRepository, SubjectsUnderConstruction subjectAdditionHelper, ThreadUtil threadUtil) {
-        super(subjectRepository, parseUtil, subjectAdditionHelper);
+    SubjectService(UserRepository userRepository, SubjectRepository subjectRepository, Converter converter, ParseUtil parseUtil, MenuStorage menuStorage, GroupRepository groupRepository, SubjectsUnderConstruction subjectAdditionHelper, ThreadUtil threadUtil) {
+        super(subjectRepository, threadUtil, parseUtil, subjectAdditionHelper, menuStorage, converter);
         this.userRepository = userRepository;
         this.subjectRepository = subjectRepository;
         this.parseUtil = parseUtil;
         this.menuStorage = menuStorage;
         this.groupRepository = groupRepository;
         this.subjectAdditionHelper = subjectAdditionHelper;
-        this.threadUtil = threadUtil;
         this.botConfig = new BotConfig();
     }
 

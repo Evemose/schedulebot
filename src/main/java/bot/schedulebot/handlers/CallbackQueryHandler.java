@@ -58,6 +58,8 @@ public class CallbackQueryHandler {
         List<Message> resultMessagesList = new ArrayList<>();
         String callbackData = update.getCallbackQuery().getData();
         User u = userRepository.get(update.getCallbackQuery().getFrom().getUserName());
+        if (callbackData.startsWith("Add")) u.setMode("Add");
+        else if (callbackData.startsWith("Change")) u.setMode("Edit");
         if (!(callbackData.startsWith("Task") || (callbackData.startsWith("Announcement")))) {
             u.setInstanceAdditionStage(InstanceAdditionStage.NONE);
             userRepository.update(u);
@@ -70,20 +72,20 @@ public class CallbackQueryHandler {
                 resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUPS_INDEX_MENU, update));
             }
             case "Create group" -> {
-                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.GROUP_START, update, null));
+                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.GROUP_START, update, "Add"));
             }
             case "Show group join menu" -> {
                 groupMenuStorage.handleGroupJoinMenuProvision(update, resultMessagesList);
             }
             case "Task appointment yes" -> {
-                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_DATE, update, null));
+                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_DATE, update, "Add"));
             }
             case "Task appointment no" -> {
                 appointmentsUnderConstruction.getObjectsUnderConstructions().get(update.getCallbackQuery().getFrom().getUserName()).setId(-1);
-                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, null));
+                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, "Add"));
             }
             case "Task set image no" -> {
-                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_NAME_NO_IMAGE, update, null));
+                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_NAME_NO_IMAGE, update, "Add"));
             }
             case "Task set image yes" -> {
                 taskService.handleTaskSetImageYes(resultMessagesList, u);
@@ -92,10 +94,10 @@ public class CallbackQueryHandler {
                 taskService.handleTaskSetDocumentYes(resultMessagesList, u);
             }
             case "Task set document no" -> {
-                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_IMAGE_NO_FILE, update, null));
+                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_IMAGE_NO_FILE, update, "Add"));
             }
             case "Announcement set image no", "Announcement set document no", "Announcement set document yes", "Announcement set image yes" -> {
-                serviceController.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_TITLE, update, null);
+                serviceController.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_TITLE, update, "Add");
             }
             case "Delete this" -> {
                 botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
@@ -154,7 +156,7 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Transfer ownership of \\d+ to \\d+")) {
                     groupService.handleOwnershipTransfer(update, resultMessagesList, callbackData, u);
                 } else if (callbackData.matches("Set subject \\d+")) {
-                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_SUBJECT, update, null));
+                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_SUBJECT, update, "Add"));
                 } else if (callbackData.matches("Leave group \\d+")) {
                     groupService.handleGroupLeave(update, resultMessagesList, callbackData, u);
                 } else if (callbackData.matches("Show group code \\d+")) {
@@ -164,11 +166,11 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Appoint unappointed task in group \\d+")) {
                     u.setGroupMode(true);
                     userRepository.update(u);
-                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, null));
+                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, "Add"));
                 } else if (callbackData.matches("Appoint unappointed task of user \\d+")) {
                     u.setGroupMode(false);
                     userRepository.update(u);
-                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, null));
+                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, "Add"));
                 } else if (callbackData.matches("Show unappointed tasks of \\d+")) {
                     u.setGroupMode(false);
                     userRepository.update(u);
@@ -272,9 +274,9 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Add notification to \\d+")) {
                     u.setGroupMode(true);
                     userRepository.update(u);
-                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_START, update, null));
+                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_START, update, "Add"));
                 } else if (callbackData.matches("Notification \\d{4}-\\d{2}-\\d{2}")) {
-                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_DATE, update, null));
+                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_DATE, update, "Add"));
                 } else if (callbackData.matches("Show notification \\d+")) {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.SHOW_NOTIFICATION_MENU, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Delete notification \\d+")) {

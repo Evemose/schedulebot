@@ -10,8 +10,6 @@ import java.util.List;
 
 @Component
 public class KeyboardGenerator {
-    public KeyboardGenerator() {
-    }
 
     public List<List<InlineKeyboardButton>> getKeyboardFromAppointmentsList(List<Appointment> appointments, int id, boolean isGroupMode) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();

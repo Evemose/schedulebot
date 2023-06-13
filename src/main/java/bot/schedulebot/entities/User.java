@@ -35,6 +35,9 @@ public class User implements Entity, Serializable {
     @Column(name = "is_group_mode")
     private boolean isGroupMode;
 
+    @Column(name = "mode")
+    private String mode;
+
     @Enumerated(EnumType.STRING)
     private InstanceAdditionStage instanceAdditionStage;
 

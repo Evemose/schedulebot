@@ -15,6 +15,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Exchanger;
 
 @Controller
@@ -46,42 +47,46 @@ public class ServiceController {
     }
 
 
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Object entity) {
+    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, String mode) {
         List<Message> messages = new ArrayList<>();
-        if (update.hasCallbackQuery() || (update.hasMessage() && update.getMessage().getText() != null) &&
-                !(instanceAdditionStage.equals(InstanceAdditionStage.TASK_IMAGE)
-                        || instanceAdditionStage.equals(InstanceAdditionStage.TASK_FILE)) || instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
-            if (instanceAdditionStage.toString().startsWith("SUBJECT")) {
-                Exchanger<Update> exchanger = subjectsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
-                try {
-                    exchanger.exchange(update);
-                } catch (InterruptedException ignored) {
+        try {
+            if (Objects.equals(mode, "Add")) {
+                if (update.hasCallbackQuery() || (update.hasMessage() && update.getMessage().getText() != null) &&
+                        !(instanceAdditionStage.equals(InstanceAdditionStage.TASK_IMAGE)
+                                || instanceAdditionStage.equals(InstanceAdditionStage.TASK_FILE)) || instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
+                    if (instanceAdditionStage.toString().startsWith("SUBJECT")) {
+                        Exchanger<Update> exchanger = subjectsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
+                        exchanger.exchange(update);
+                    } else if (instanceAdditionStage.toString().startsWith("GROUP")) {
+                        messages = groupService.handleAddition(instanceAdditionStage, update, null);
+                    } else if (instanceAdditionStage.toString().startsWith("APPOINTMENT")) {
+                        messages = appointmentService.handleAddition(instanceAdditionStage, update, null);
+                    } else if (instanceAdditionStage.toString().startsWith("TASK")) {
+                        messages = taskService.handleAddition(instanceAdditionStage, update, null);
+                    } else if (instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
+                        Exchanger<Update> exchanger = announcementsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
+                        exchanger.exchange(update);
+                    } else if (instanceAdditionStage.toString().startsWith("NOTIFICATION")) {
+                        messages = notificationService.handleAddition(instanceAdditionStage, update, null);
+                    }
+                } else if ((instanceAdditionStage.equals(InstanceAdditionStage.TASK_IMAGE) || instanceAdditionStage.equals(InstanceAdditionStage.ANNOUNCEMENT_IMAGE)) && update.getMessage().getPhoto() != null
+                        || (instanceAdditionStage.equals(InstanceAdditionStage.TASK_FILE) || instanceAdditionStage.equals(InstanceAdditionStage.ANNOUNCEMENT_FILE)) && update.getMessage().getDocument() != null) {
+                    messages = instanceAdditionStage.toString().startsWith("TASK") ?
+                            taskService.handleAddition(instanceAdditionStage, update, null) :
+                            announcementService.handleAddition(instanceAdditionStage, update, null);
+                } else {
+                    Message message = new Message();
+                    message.setText("Do not the bot. Go to the door and think about your actions");
+                    messages.add(message);
+                    messages.add(menuStorage.getMenu(MenuMode.MAIN_MENU, update, userRepository.get(parseUtil.getTag(update)).getId()));
                 }
-            } else if (instanceAdditionStage.toString().startsWith("GROUP")) {
-                messages = groupService.handleAddition(instanceAdditionStage, update, null);
-            } else if (instanceAdditionStage.toString().startsWith("APPOINTMENT")) {
-                messages = appointmentService.handleAddition(instanceAdditionStage, update, null);
-            } else if (instanceAdditionStage.toString().startsWith("TASK")) {
-                messages = taskService.handleAddition(instanceAdditionStage, update, null);
-            } else if (instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
-                Exchanger<Update> exchanger = announcementsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
-                try {
+            } else if (mode.equals("Edit")) {
+                if (instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
+                    Exchanger<Update> exchanger = announcementsUnderConstruction.getEditExchangers().get(parseUtil.getTag(update));
                     exchanger.exchange(update);
-                } catch (InterruptedException ignored) {
                 }
-            } else if (instanceAdditionStage.toString().startsWith("NOTIFICATION")) {
-                messages = notificationService.handleAddition(instanceAdditionStage, update, null);
             }
-        } else if ((instanceAdditionStage.equals(InstanceAdditionStage.TASK_IMAGE) || instanceAdditionStage.equals(InstanceAdditionStage.ANNOUNCEMENT_IMAGE)) && update.getMessage().getPhoto() != null
-                || (instanceAdditionStage.equals(InstanceAdditionStage.TASK_FILE) || instanceAdditionStage.equals(InstanceAdditionStage.ANNOUNCEMENT_FILE)) && update.getMessage().getDocument() != null) {
-            messages = instanceAdditionStage.toString().startsWith("TASK") ?
-                    taskService.handleAddition(instanceAdditionStage, update, null) :
-                    announcementService.handleAddition(instanceAdditionStage, update, null);
-        } else {
-            Message message = new Message();
-            message.setText("Do not the bot. Go to the door and think about your actions");
-            messages.add(message);
-            messages.add(menuStorage.getMenu(MenuMode.MAIN_MENU, update, userRepository.get(parseUtil.getTag(update)).getId()));
+        } catch (InterruptedException ignored) {
         }
         return messages;
     }
@@ -90,7 +95,14 @@ public class ServiceController {
         if (callbackData.substring("Change ".length()).startsWith("task")) {
             taskService.handleTaskPropertyChange(update, resultMessagesList, callbackData, u);
         } else if (callbackData.substring("Change ".length()).startsWith("announcement")) {
-            announcementService.handleAnnouncementPropertyChange(update, resultMessagesList, callbackData, u);
+            User user = userRepository.get(parseUtil.getTag(update));
+            user.setMode("Edit");
+            user.setInstanceAdditionStage(InstanceAdditionStage.ANNOUNCEMENT_START);
+            user.setGroupMode(true);
+            userRepository.update(user);
+            announcementService.editEntity(update,
+                    update.getCallbackQuery().getData().substring("Change announcement ".length(),
+                            update.getCallbackQuery().getData().indexOf(String.valueOf(parseUtil.getTargetId(update.getCallbackQuery().getData()))) - 1));
         } else if (callbackData.substring("Change ".length()).startsWith("notification")) {
             notificationService.handleNotificationPropertyChange(update, resultMessagesList, callbackData, u);
         }

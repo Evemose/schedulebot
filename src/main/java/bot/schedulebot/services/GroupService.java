@@ -10,7 +10,9 @@ import bot.schedulebot.enums.Role;
 import bot.schedulebot.objectsunderconstruction.GroupsUnderConstruction;
 import bot.schedulebot.repositories.*;
 import bot.schedulebot.storages.menustorages.MenuStorage;
+import bot.schedulebot.util.Converter;
 import bot.schedulebot.util.ParseUtil;
+import bot.schedulebot.util.ThreadUtil;
 import bot.schedulebot.util.TimersStorage;
 import org.hibernate.Session;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -37,8 +39,8 @@ public class GroupService extends Service<Group> {
     private final NotificationRepository notificationRepository;
     private final BotConfig botConfig;
 
-    public GroupService(UserRepository userRepository, GroupRepository groupRepository, MenuStorage menuStorage, GroupsUnderConstruction groupAdditionHelper, ParseUtil parseUtil, TaskService taskService, SubjectRepository subjectRepository, AnnouncementRepository announcementRepository, TimersStorage timersStorage, NotificationRepository notificationRepository) {
-        super(groupRepository, parseUtil, groupAdditionHelper);
+    public GroupService(UserRepository userRepository, GroupRepository groupRepository, MenuStorage menuStorage, GroupsUnderConstruction groupAdditionHelper, ParseUtil parseUtil, TaskService taskService, SubjectRepository subjectRepository, AnnouncementRepository announcementRepository, TimersStorage timersStorage, Converter converter, NotificationRepository notificationRepository, ThreadUtil threadUtil) {
+        super(groupRepository, threadUtil, parseUtil, groupAdditionHelper, menuStorage, converter);
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.menuStorage = menuStorage;
