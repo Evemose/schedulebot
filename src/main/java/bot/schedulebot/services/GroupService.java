@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service
-public class GroupService implements Service {
+public class GroupService extends Service {
 
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;

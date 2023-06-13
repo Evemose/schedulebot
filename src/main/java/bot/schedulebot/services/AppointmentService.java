@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @org.springframework.stereotype.Service
-public class AppointmentService implements Service {
+public class AppointmentService extends Service {
     private final ObjectsUnderConstruction appointmentObjectsUnderConstruction;
     private final AppointmentRepository appointmentRepository;
     private final UnappointedTaskRepository unappointedTaskRepository;

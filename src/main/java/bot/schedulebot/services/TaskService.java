@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @org.springframework.stereotype.Service
-public class TaskService implements Service {
+public class TaskService extends Service {
     private final UserRepository userRepository;
     private final ParseUtil parseUtil;
     private final GroupRepository groupRepository;

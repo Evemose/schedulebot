@@ -17,16 +17,18 @@ import bot.schedulebot.storages.menustorages.MenuStorage;
 import bot.schedulebot.util.Converter;
 import bot.schedulebot.util.Notificator;
 import bot.schedulebot.util.ParseUtil;
+import bot.schedulebot.util.ThreadUtil;
+import bot.schedulebot.util.generators.TextGenerator;
 import org.hibernate.Session;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Exchanger;
 
 @org.springframework.stereotype.Service
-public class AnnouncementService implements Service {
+public class AnnouncementService extends Service<Announcement> {
 
     private final AnnouncementsUnderConstruction announcementsUnderConstruction;
     private final UserRepository userRepository;
@@ -38,8 +40,10 @@ public class AnnouncementService implements Service {
     private final Notificator notificator;
     private final FileRepository fileRepository;
     private final BotConfig botConfig;
+    private final ThreadUtil threadUtil;
+    private final TextGenerator textGenerator;
 
-    public AnnouncementService(AnnouncementsUnderConstruction announcementsUnderConstruction, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, MenuStorage menuStorage, Converter converter, AnnouncementRepository announcementRepository, Notificator notificator, FileRepository fileRepository) {
+    public AnnouncementService(AnnouncementsUnderConstruction announcementsUnderConstruction, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, MenuStorage menuStorage, Converter converter, AnnouncementRepository announcementRepository, Notificator notificator, FileRepository fileRepository, ThreadUtil threadUtil, TextGenerator textGenerator) {
         this.announcementsUnderConstruction = announcementsUnderConstruction;
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
@@ -49,63 +53,71 @@ public class AnnouncementService implements Service {
         this.announcementRepository = announcementRepository;
         this.notificator = notificator;
         this.fileRepository = fileRepository;
+        this.threadUtil = threadUtil;
         this.botConfig = new BotConfig();
+        this.textGenerator = textGenerator;
     }
 
     @Override
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Object entity) {
-        User user = userRepository.get(parseUtil.getTag(update));
-        List<Message> messages = new ArrayList<>();
-        switch (instanceAdditionStage) {
-            case ANNOUNCEMENT_START -> {
-                handleAnnouncementAdditionStart(user, update);
-                messages.add(menuStorage.getMenu(MenuMode.ADD_ANNOUNCEMENT, update));
+    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Announcement entity) {
+        new Thread(() -> {
+            try {
+                String chatId = update.getCallbackQuery().getMessage().getChatId().toString();
+                threadUtil.scheduleThreadKill(Thread.currentThread());
+                Exchanger<Update> exchanger = announcementsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
+                botConfig.sendMessage(chatId, menuStorage.getMenu(MenuMode.ADD_ANNOUNCEMENT, update));
+                Update temp = exchanger.exchange(null);
+                while (!temp.hasCallbackQuery()) {
+                    Message message = new Message();
+                    message.setText(textGenerator.getAnswerTheQuestionRequest());
+                    botConfig.sendMessage(chatId, message);
+                    temp = exchanger.exchange(null);
+                }
+                if(temp.getCallbackQuery().getData().contains("yes")) {
+                    Message message = new Message();
+                    message.setText("Send document you want to attach");
+                    botConfig.sendMessage(chatId, message);
+                    temp = exchanger.exchange(null);
+                    while (!temp.getMessage().hasDocument()) {
+                        message.setText("Message does not contain document. Send document you want to attach");
+                        botConfig.sendMessage(chatId, message);
+                        temp = exchanger.exchange(null);
+                    }
+                    entity.setFile(parseUtil.getMessageFile(temp));
+                }
+                botConfig.sendMessage(chatId, menuStorage.getMenu(MenuMode.SET_ANNOUNCEMENT_FILE, update));
+                temp = exchanger.exchange(null);
+                while (!temp.hasCallbackQuery()) {
+                    Message message = new Message();
+                    message.setText(textGenerator.getAnswerTheQuestionRequest());
+                    botConfig.sendMessage(chatId, message);
+                    temp = exchanger.exchange(null);
+                }
+                if(temp.getCallbackQuery().getData().contains("yes")) {
+                    Message message = new Message();
+                    message.setText("Send image you want to attach");
+                    botConfig.sendMessage(chatId, message);
+                    temp = exchanger.exchange(null);
+                    while (!temp.getMessage().hasDocument()) {
+                        message.setText("Message does not contain image. Send document you want to attach");
+                        botConfig.sendMessage(chatId, message);
+                        temp = exchanger.exchange(null);
+                    }
+                    entity.setImage(converter.convertFileToJsonString(parseUtil.getMessageImage(update)));
+                }
+                botConfig.sendMessage(chatId, menuStorage.getMenu(MenuMode.SET_ANNOUNCEMENT_IMAGE, update));
+                temp = exchanger.exchange(null);
+                entity.setTitle(temp.getMessage().getText());
+                botConfig.sendMessage(chatId, menuStorage.getMenu(MenuMode.SET_ANNOUNCEMENT_TITLE, update));
+                temp = exchanger.exchange(null);
+                entity.setText(temp.getMessage().getText());
+                persistAnnouncement(userRepository.get(parseUtil.getTag(update)), update);
+                botConfig.sendMessage(chatId, menuStorage.getMenu(MenuMode.SET_ANNOUNCEMENT_TEXT, update));
+                botConfig.sendMessage(chatId, menuStorage.getMenu(MenuMode.ANNOUNCEMENT_MENU_MANAGE, update, entity.getId()));
+            } catch (InterruptedException ignored) {
             }
-            case ANNOUNCEMENT_FILE -> {
-                handleAnnouncementFileSet(user, update);
-                messages.add(menuStorage.getMenu(MenuMode.SET_ANNOUNCEMENT_FILE, update));
-            }
-            case ANNOUNCEMENT_IMAGE_SKIP_FILE -> {
-                user.setInstanceAdditionStage(InstanceAdditionStage.ANNOUNCEMENT_IMAGE);
-                userRepository.update(user);
-                messages.add(menuStorage.getMenu(MenuMode.SET_ANNOUNCEMENT_IMAGE_SKIP_FILE, update));
-            }
-            case ANNOUNCEMENT_IMAGE -> {
-                handleAnnouncementImageSet(user, update);
-                messages.add(menuStorage.getMenu(MenuMode.SET_ANNOUNCEMENT_IMAGE, update));
-            }
-            case ANNOUNCEMENT_TITLE_SKIP_IMAGE -> {
-                user.setInstanceAdditionStage(InstanceAdditionStage.ANNOUNCEMENT_TITLE);
-                userRepository.update(user);
-                messages.add(menuStorage.getMenu(MenuMode.SET_ANNOUNCEMENT_TITLE_SKIP_IMAGE, update));
-            }
-            case ANNOUNCEMENT_TITLE -> {
-                handleAnnouncementTitleSet(user, update);
-                messages.add(menuStorage.getMenu(MenuMode.SET_ANNOUNCEMENT_TITLE, update));
-            }
-            case ANNOUNCEMENT_TEXT -> {
-                handleAnnouncementTextSet(user, update);
-                persistAnnouncement(user, update);
-                messages.add(menuStorage.getMenu(MenuMode.SET_ANNOUNCEMENT_TEXT, update));
-                messages.add(menuStorage.getMenu(MenuMode.GROUP_ANNOUNCEMENTS_MENU_MANAGE, update,
-                        announcementsUnderConstruction.getObjectsUnderConstructions().get(parseUtil.getTag(update)).getGroup().getId()));
-                announcementsUnderConstruction.getObjectsUnderConstructions().remove(parseUtil.getTag(update));
-            }
-        }
-        if (announcementsUnderConstruction.getEditOrNewTask().get(parseUtil.getTag(update)) != null &&
-                announcementsUnderConstruction.getEditOrNewTask().get(parseUtil.getTag(update)).equals(EditOrNew.EDIT)) {
-            user.setInstanceAdditionStage(InstanceAdditionStage.NONE);
-            userRepository.update(user);
-            Announcement announcement = announcementsUnderConstruction.getObjectsUnderConstructions().get(parseUtil.getTag(update));
-            announcementRepository.update(announcement);
-            messages.clear();
-            Message message = new Message();
-            message.setText("Announcement changed");
-            messages.add(message);
-            messages.add(menuStorage.getMenu(MenuMode.ANNOUNCEMENT_EDIT_MENU, update, announcement.getId()));
-            announcementsUnderConstruction.getObjectsUnderConstructions().remove(parseUtil.getTag(update));
-        }
-        return messages;
+        }, "Announcement addition thread of " + update.getCallbackQuery().getFrom().getUserName()).start();
+        return null;
     }
 
     private void persistAnnouncement(User user, Update update) {
@@ -121,38 +133,20 @@ public class AnnouncementService implements Service {
         session.close();
     }
 
-    private void handleAnnouncementTextSet(User user, Update update) {
-        user.setInstanceAdditionStage(InstanceAdditionStage.NONE);
+    public void handleAdditionStart(User user, Update update) {
+        user.setGroupMode(true);
+        user.setInstanceAdditionStage(InstanceAdditionStage.ANNOUNCEMENT_FILE);
         userRepository.update(user);
-        announcementsUnderConstruction.getObjectsUnderConstructions().get(user.getTag()).setText(update.getMessage().getText());
-    }
 
-    private void handleAnnouncementTitleSet(User user, Update update) {
-        user.setInstanceAdditionStage(InstanceAdditionStage.ANNOUNCEMENT_TEXT);
-        userRepository.update(user);
-        announcementsUnderConstruction.getObjectsUnderConstructions().get(user.getTag()).setTitle(update.getMessage().getText());
-    }
-
-    private void handleAnnouncementImageSet(User user, Update update) {
-        user.setInstanceAdditionStage(InstanceAdditionStage.ANNOUNCEMENT_TITLE);
-        userRepository.update(user);
-        announcementsUnderConstruction.getObjectsUnderConstructions().get(user.getTag()).setImage(converter.convertFileToJsonString(parseUtil.getMessageImage(update)));
-    }
-
-    private void handleAnnouncementFileSet(User user, Update update) {
-        user.setInstanceAdditionStage(InstanceAdditionStage.ANNOUNCEMENT_IMAGE);
-        userRepository.update(user);
-        announcementsUnderConstruction.getObjectsUnderConstructions().get(user.getTag()).setFile(parseUtil.getMessageFile(update));
-    }
-
-    private void handleAnnouncementAdditionStart(User user, Update update) {
         Announcement announcement = new Announcement();
         Group group = groupRepository.get(parseUtil.getTargetId(update.getCallbackQuery().getData()));
         announcement.setGroup(group);
+
         announcementsUnderConstruction.getObjectsUnderConstructions().put(user.getTag(), announcement);
         announcementsUnderConstruction.getEditOrNewTask().put(user.getTag(), EditOrNew.NEW);
-        user.setInstanceAdditionStage(InstanceAdditionStage.ANNOUNCEMENT_FILE);
-        userRepository.update(user);
+        announcementsUnderConstruction.getExchangers().put(user.getTag(), new Exchanger<>());
+
+        handleAddition(InstanceAdditionStage.NONE, update, announcement);
     }
 
     private void markAnnouncementAsImportant(int announcementId) {
@@ -171,26 +165,6 @@ public class AnnouncementService implements Service {
         group.getImportantInfo().remove(announcement);
         session.close();
         groupRepository.update(group);
-    }
-
-    public void handleAnnouncementSetDocumentYes(List<Message> resultMessagesList, User u) {
-        u.setInstanceAdditionStage(InstanceAdditionStage.ANNOUNCEMENT_FILE);
-        Session session = HibernateConfig.getSession();
-        userRepository.update(u, session);
-        session.close();
-        Message message = new Message();
-        message.setText("Send document you want to attach");
-        resultMessagesList.add(message);
-    }
-
-    public void handleAnnouncementSetImageYes(List<Message> resultMessagesList, User u) {
-        u.setInstanceAdditionStage(InstanceAdditionStage.ANNOUNCEMENT_IMAGE);
-        Session session = HibernateConfig.getSession();
-        userRepository.update(u, session);
-        session.close();
-        Message message = new Message();
-        message.setText("Send image you want to attach");
-        resultMessagesList.add(message);
     }
 
     public void handleAnnouncementDeletion(Update update, List<Message> resultMessagesList, String callbackData, User u) {

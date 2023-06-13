@@ -39,7 +39,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 @Service
-public class NotificationService implements bot.schedulebot.services.Service {
+public class NotificationService extends bot.schedulebot.services.Service {
     private final NotificationsUnderConstruction notificationsUnderConstruction;
     private final ParseUtil parseUtil;
     private final UserRepository userRepository;

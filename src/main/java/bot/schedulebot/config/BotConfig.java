@@ -20,6 +20,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class BotConfig extends TelegramLongPollingBot {
@@ -61,7 +62,7 @@ public class BotConfig extends TelegramLongPollingBot {
 
     public List<Integer> sendMessagesList(String chatId, List<Message> messagesList) {
         List<Integer> messageIds = new ArrayList<>();
-        messagesList.stream().filter(message -> message != null).forEach(message -> sendMessage(chatId, message));
+        messagesList.stream().filter(Objects::nonNull).forEach(message -> messageIds.add(sendMessage(chatId, message)));
         return messageIds;
     }
 

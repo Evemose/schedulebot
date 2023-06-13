@@ -20,6 +20,9 @@ public class TextGenerator {
         this.userRepository = userRepository;
     }
 
+    public String getAnswerTheQuestionRequest() {
+        return "Please, answer question above or stop addition process by pressing any other button";
+    }
     public String getStringOfUsersWithTask(int taskId) {
         String res = "";
         Session session = HibernateConfig.getSession();

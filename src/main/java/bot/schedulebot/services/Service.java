@@ -9,6 +9,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.List;
 
-public interface Service<T> {
-    List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, T entity);
+public abstract class Service<T> {
+    abstract public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, T entity);
+
+
 }

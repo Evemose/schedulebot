@@ -94,17 +94,8 @@ public class CallbackQueryHandler {
             case "Task set document no" -> {
                 resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.TASK_IMAGE_NO_FILE, update, null));
             }
-            case "Announcement set image no" -> {
-                resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_TITLE_SKIP_IMAGE, update, null));
-            }
-            case "Announcement set image yes" -> {
-                announcementService.handleAnnouncementSetImageYes(resultMessagesList, u);
-            }
-            case "Announcement set document yes" -> {
-                announcementService.handleAnnouncementSetDocumentYes(resultMessagesList, u);
-            }
-            case "Announcement set document no" -> {
-                resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_IMAGE_SKIP_FILE, update, null));
+            case "Announcement set image no", "Announcement set document no", "Announcement set document yes", "Announcement set image yes" -> {
+                mainService.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_TITLE, update, null);
             }
             case "Delete this" -> {
                 botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
@@ -218,9 +209,7 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Add personal task to user \\d+ to \\d+")) {
                     taskService.handlePersonalTaskAddition(update, resultMessagesList, callbackData, u);
                 } else if (callbackData.matches("Add announcement to group \\d+")) {
-                    u.setGroupMode(true);
-                    userRepository.update(u);
-                    resultMessagesList.addAll(mainService.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_START, update, null));
+                    announcementService.handleAdditionStart(u, update);
                 } else if (callbackData.startsWith("Show announcement")) {
                     menuStorage.handleAnnouncementMenuProvision(update, resultMessagesList, callbackData);
                 } else if (callbackData.matches("Delete announcement \\d+")) {

@@ -13,8 +13,9 @@ public class ThreadUtil {
             @Override
             public void run() {
                 thread.interrupt();
+                System.out.println("Thread " + thread.getName() + " was killed");
             }
-        }, 36 * 100000);
+        }, 36 * 1000 * 100);
 
     }
 }

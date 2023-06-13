@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.concurrent.Exchanger;
 
 @org.springframework.stereotype.Service
-public class SubjectService implements Service<Subject> {
+public class SubjectService extends Service<Subject> {
     private final UserRepository userRepository;
     private final SubjectRepository subjectRepository;
     private final ParseUtil parseUtil;
@@ -75,11 +75,11 @@ public class SubjectService implements Service<Subject> {
         new Thread(() -> {
         try {
             threadUtil.scheduleThreadKill(Thread.currentThread());
-            Exchanger<String> exchanger = subjectAdditionHelper.getExchangers().get(parseUtil.getTag(update));
+            Exchanger<Update> exchanger = subjectAdditionHelper.getExchangers().get(parseUtil.getTag(update));
 
             botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
                     menuStorage.getMenu(MenuMode.ADD_SUBJECT_TO_GROUP, update));
-            entity.setName(exchanger.exchange(""));
+            entity.setName(exchanger.exchange(null).getMessage().getText());
 
             subjectRepository.add(entity);
             botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
@@ -92,9 +92,8 @@ public class SubjectService implements Service<Subject> {
                 botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
                         menuStorage.getMenu(MenuMode.SHOW_SUBJECTS_OF_USER, update));
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }}).start();
+        } catch (InterruptedException ignored){}
+        }, "Subject construction of " + parseUtil.getTag(update)).start();
         return null;
     }
 

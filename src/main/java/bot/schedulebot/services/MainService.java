@@ -3,6 +3,7 @@ package bot.schedulebot.services;
 import bot.schedulebot.entities.User;
 import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
+import bot.schedulebot.objectsunderconstruction.AnnouncementsUnderConstruction;
 import bot.schedulebot.objectsunderconstruction.SubjectsUnderConstruction;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.MenuStorage;
@@ -16,8 +17,8 @@ import java.util.List;
 import java.util.concurrent.Exchanger;
 
 @Controller
-public class MainService implements Service {
-    private final Service subjectService;
+public class MainService extends Service {
+    private final SubjectService subjectService;
     private final TaskService taskService;
     private final GroupService groupService;
     private final Service appointmentService;
@@ -27,8 +28,9 @@ public class MainService implements Service {
     private final AnnouncementService announcementService;
     private final NotificationService notificationService;
     private final SubjectsUnderConstruction subjectsUnderConstruction;
+    private final AnnouncementsUnderConstruction announcementsUnderConstruction;
 
-    public MainService(SubjectService subjectAdditionHandler, TaskService taskAdditionHandler, GroupService groupAdditionHandler, AppointmentService appointmentAdditionHandler, UserRepository userRepository, ParseUtil parseUtil, MenuStorage menuStorage, AnnouncementService announcementService, NotificationService notificationService, SubjectsUnderConstruction subjectsUnderConstruction) {
+    public MainService(SubjectService subjectAdditionHandler, TaskService taskAdditionHandler, GroupService groupAdditionHandler, AppointmentService appointmentAdditionHandler, UserRepository userRepository, ParseUtil parseUtil, MenuStorage menuStorage, AnnouncementService announcementService, NotificationService notificationService, SubjectsUnderConstruction subjectsUnderConstruction, AnnouncementsUnderConstruction announcementsUnderConstruction) {
         this.subjectService = subjectAdditionHandler;
         this.taskService = taskAdditionHandler;
         this.groupService = groupAdditionHandler;
@@ -39,6 +41,7 @@ public class MainService implements Service {
         this.announcementService = announcementService;
         this.notificationService = notificationService;
         this.subjectsUnderConstruction = subjectsUnderConstruction;
+        this.announcementsUnderConstruction = announcementsUnderConstruction;
     }
 
     @Override
@@ -46,13 +49,12 @@ public class MainService implements Service {
         List<Message> messages = new ArrayList<>();
         if (update.hasCallbackQuery() || (update.hasMessage() && update.getMessage().getText() != null) &&
                 !(instanceAdditionStage.equals(InstanceAdditionStage.TASK_IMAGE)
-                        || instanceAdditionStage.equals(InstanceAdditionStage.TASK_FILE))) {
+                        || instanceAdditionStage.equals(InstanceAdditionStage.TASK_FILE)) || instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
             if (instanceAdditionStage.toString().startsWith("SUBJECT")) {
-                Exchanger<String> exchanger = subjectsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
+                Exchanger<Update> exchanger = subjectsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
                 try {
-                    exchanger.exchange(update.getMessage().getText());
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    exchanger.exchange(update);
+                } catch (InterruptedException ignored) {
                 }
             } else if (instanceAdditionStage.toString().startsWith("GROUP")) {
                 messages = groupService.handleAddition(instanceAdditionStage, update, null);
@@ -61,7 +63,11 @@ public class MainService implements Service {
             } else if (instanceAdditionStage.toString().startsWith("TASK")) {
                 messages = taskService.handleAddition(instanceAdditionStage, update, null);
             } else if (instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
-                messages = announcementService.handleAddition(instanceAdditionStage, update, null);
+                Exchanger<Update> exchanger = announcementsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
+                try {
+                    exchanger.exchange(update);
+                } catch (InterruptedException ignored) {
+                }
             } else if (instanceAdditionStage.toString().startsWith("NOTIFICATION")) {
                 messages = notificationService.handleAddition(instanceAdditionStage, update, null);
             }
