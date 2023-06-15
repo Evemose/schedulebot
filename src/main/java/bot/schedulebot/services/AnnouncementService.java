@@ -42,8 +42,8 @@ public class AnnouncementService extends Service<Announcement> {
     private final BotConfig botConfig;
     private final TextGenerator textGenerator;
 
-    public AnnouncementService(AnnouncementsUnderConstruction announcementsUnderConstruction, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, MenuStorage menuStorage, Converter converter, AnnouncementRepository announcementRepository, Notificator notificator, FileRepository fileRepository, ThreadUtil threadUtil, TextGenerator textGenerator) {
-        super(announcementRepository, threadUtil, parseUtil, announcementsUnderConstruction, menuStorage, converter);
+    protected AnnouncementService(AnnouncementsUnderConstruction announcementsUnderConstruction, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, MenuStorage menuStorage, Converter converter, AnnouncementRepository announcementRepository, Notificator notificator, FileRepository fileRepository, ThreadUtil threadUtil, TextGenerator textGenerator) {
+        super(announcementRepository, threadUtil, parseUtil, announcementsUnderConstruction, menuStorage, converter, fileRepository);
         this.announcementsUnderConstruction = announcementsUnderConstruction;
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;

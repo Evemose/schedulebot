@@ -5,16 +5,17 @@
 
 package bot.schedulebot.util;
 
+import org.springframework.stereotype.Component;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
-import org.springframework.stereotype.Component;
 
 @Component
 public class TimersStorage {
     private final Map<Integer, Timer> repeatedNotificationTimers = new HashMap();
 
-    public TimersStorage() {
+    private TimersStorage() {
     }
 
     public Map<Integer, Timer> getRepeatedNotificationTimers() {

@@ -8,6 +8,10 @@ import java.util.TimeZone;
 
 @Component
 public class DateTimeUtil {
+
+    private DateTimeUtil() {
+    }
+
     public Date getMidnightOfNextDay() {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeZone(TimeZone.getTimeZone("Europe/Kiev"));

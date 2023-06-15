@@ -267,7 +267,7 @@ public class MenuStorage {
             case TASKS_FOR_TODAY: {
                 Session session = HibernateConfig.getSession();
                 TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(targetId, session);
-                new BotConfig().editMessageText(parseUtil.getChatId(update), todayTasksInfo.getMessageId(), generalMenuStorage.getTasksForTodayMenu(todayTasksInfo, session));
+                new BotConfig().editMessage(parseUtil.getChatId(update), todayTasksInfo.getMessageId(), generalMenuStorage.getTasksForTodayMenu(todayTasksInfo, session));
                 session.close();
                 return null;
             }

@@ -1,6 +1,7 @@
 package bot.schedulebot.handlers;
 
 import bot.schedulebot.config.BotConfig;
+import bot.schedulebot.entities.Task;
 import bot.schedulebot.entities.TodayTasksInfo;
 import bot.schedulebot.entities.User;
 import bot.schedulebot.enums.InstanceAdditionStage;
@@ -197,6 +198,7 @@ public class CallbackQueryHandler {
                     if (callbackData.contains("deletethis")) {
                         botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
                     }
+                    Task.getTaskMenus().put(u.getTag(), update.getCallbackQuery().getMessage().getMessageId());
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.TASK_MENU, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.startsWith("Edit")) {
                     menuStorage.handleEditMenuProvision(update, resultMessagesList, callbackData);
@@ -284,11 +286,11 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Turn off notifications for \\d+")) {
                     u.setWantToGenNotifications(false);
                     userRepository.update(u);
-                    botConfig.editMessageText(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId(), menuStorage.getMenu(MenuMode.MAIN_MENU, update, u.getId()));
+                    botConfig.editMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId(), menuStorage.getMenu(MenuMode.MAIN_MENU, update, u.getId()));
                 } else if (callbackData.matches("Turn on notifications for \\d+")) {
                     u.setWantToGenNotifications(true);
                     userRepository.update(u);
-                    botConfig.editMessageText(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId(), menuStorage.getMenu(MenuMode.MAIN_MENU, update, u.getId()));
+                    botConfig.editMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId(), menuStorage.getMenu(MenuMode.MAIN_MENU, update, u.getId()));
                 } else if (callbackData.matches("Delete group \\d+")) {
                     groupService.handleGroupDelete(update, resultMessagesList, callbackData, u);
                 } else if (callbackData.matches("Remove admin from \\d+")) {

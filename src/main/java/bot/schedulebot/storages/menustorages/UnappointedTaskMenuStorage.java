@@ -122,7 +122,7 @@ public class UnappointedTaskMenuStorage {
         message.setText(textGenerator.getUnappointedTasksWithDeadlineTodayText(todayTasksInfo));
         message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getUnappointedTasksWithDeadlineTodayKeyboard(todayTasksInfo)));
 
-        botConfig.editMessageText(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
+        botConfig.editMessage(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
         session.close();
     }
 
@@ -134,7 +134,7 @@ public class UnappointedTaskMenuStorage {
         message.setText(textGenerator.getOutdatedUnappointedTasksText(todayTasksInfo));
         message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getOutdatedUnappointedTasksKeyboard(todayTasksInfo)));
 
-        botConfig.editMessageText(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
+        botConfig.editMessage(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
         session.close();
     }
 }

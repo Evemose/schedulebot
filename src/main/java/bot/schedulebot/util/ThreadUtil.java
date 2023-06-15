@@ -7,6 +7,10 @@ import java.util.TimerTask;
 
 @Component
 public class ThreadUtil {
+
+    private ThreadUtil() {
+    }
+
     public void scheduleThreadKill(Thread thread) {
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {

@@ -12,6 +12,10 @@ import java.util.Base64;
 
 @Component
 public class Converter {
+
+    private Converter() {
+    }
+
     public String convertFileToJsonString(File file) {
         String imageString;
         try {

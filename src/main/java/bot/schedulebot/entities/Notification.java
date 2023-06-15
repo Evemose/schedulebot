@@ -25,10 +25,10 @@ public class Notification implements Serializable, Entity {
     private String title;
 
     @Column(name = "notif_date")
-    private LocalDate notificationDate;
+    private LocalDate date;
 
     @Column(name = "notif_time")
-    private LocalTime notificationTime;
+    private LocalTime time;
 
     @Column(name = "frequency")
     private int frequency;

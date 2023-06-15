@@ -7,6 +7,8 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -39,4 +41,8 @@ public class Task implements Entity, Serializable {
             joinColumns = @JoinColumn(name = "task_id"),
             inverseJoinColumns = @JoinColumn(name = "file_id"))
     private File file;
+
+    @Transient
+    @Getter
+    private static Map<String, Integer> taskMenus = new HashMap<>();
 }

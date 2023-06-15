@@ -5,6 +5,7 @@ import bot.schedulebot.entities.UnappointedTask;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,8 +16,8 @@ import static bot.schedulebot.config.HibernateConfig.getSession;
 public class UnappointedTaskRepository extends bot.schedulebot.repositories.Repository<UnappointedTask> {
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
-
-    public UnappointedTaskRepository(UserRepository userRepository, TaskRepository taskRepository) {
+    @Autowired
+    protected UnappointedTaskRepository(UserRepository userRepository, TaskRepository taskRepository) {
         this.userRepository = userRepository;
         this.taskRepository = taskRepository;
     }

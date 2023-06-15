@@ -19,7 +19,7 @@ public class ParseUtil {
 
     private final BotConfig botConfig;
 
-    public ParseUtil() {
+    private ParseUtil() {
         this.botConfig = new BotConfig();
     }
 

@@ -52,8 +52,8 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
     private final KeyboardGenerator keyboardGenerator;
     private final TimersStorage timersStorage;
 
-    NotificationService(NotificationsUnderConstruction notificationsUnderConstruction, Converter converter, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, GroupRepository groupRepository, NotificationRepository notificationRepository, KeyboardGenerator keyboardGenerator, TimersStorage timersStorage, ThreadUtil threadUtil) {
-        super(notificationRepository, threadUtil, parseUtil, notificationsUnderConstruction, menuStorage, converter);
+    protected NotificationService(NotificationsUnderConstruction notificationsUnderConstruction, Converter converter, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, GroupRepository groupRepository, NotificationRepository notificationRepository, KeyboardGenerator keyboardGenerator, TimersStorage timersStorage, ThreadUtil threadUtil) {
+        super(notificationRepository, threadUtil, parseUtil, notificationsUnderConstruction, menuStorage, converter, null);
         this.notificationsUnderConstruction = notificationsUnderConstruction;
         this.parseUtil = parseUtil;
         this.userRepository = userRepository;
@@ -158,7 +158,7 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
     private void startTimer(Notification notification) {
         Timer timer = new Timer();
         this.timersStorage.getRepeatedNotificationTimers().put(notification.getId(), timer);
-        timer.schedule(this.getNotificationTask(notification, (List)notification.getGroup().getUsers().stream().map(User::getChatId).collect(Collectors.toList())), Date.from(notification.getNotificationDate().atTime(notification.getNotificationTime()).atZone(ZoneId.systemDefault()).toInstant()), (long)notification.getFrequency() * 24L * 60L * 60L * 1000L);
+        timer.schedule(this.getNotificationTask(notification, (List)notification.getGroup().getUsers().stream().map(User::getChatId).collect(Collectors.toList())), Date.from(notification.getDate().atTime(notification.getTime()).atZone(ZoneId.systemDefault()).toInstant()), (long)notification.getFrequency() * 24L * 60L * 60L * 1000L);
     }
 
     private TimerTask getNotificationTask(final Notification notification, final List<String> chatIds) {
@@ -168,7 +168,7 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
                     Message message = new Message();
                     message.setText(notification.getText());
                     message.setReplyMarkup(new InlineKeyboardMarkup(NotificationService.this.keyboardGenerator.getDeleteButtonKeyboard()));
-                    notification.setNotificationDate(LocalDate.now().plusDays((long)notification.getFrequency()));
+                    notification.setDate(LocalDate.now().plusDays(notification.getFrequency()));
                     List<Message> messages = new ArrayList();
                     messages.add(message);
                     NotificationService.this.botConfig.sendMessagesList(chatId, messages);
@@ -178,14 +178,14 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
     }
 
     private void handleNotificationTimeSet(User user, Update update) throws DateTimeException {
-        ((Notification)this.notificationsUnderConstruction.getObjectsUnderConstructions().get(this.parseUtil.getTag(update))).setNotificationTime(LocalTime.parse(update.getMessage().getText()));
+        ((Notification)this.notificationsUnderConstruction.getObjectsUnderConstructions().get(this.parseUtil.getTag(update))).setTime(LocalTime.parse(update.getMessage().getText()));
         user.setInstanceAdditionStage(InstanceAdditionStage.NOTIFICATION_FREQUENCY);
         this.userRepository.update(user);
     }
 
     private void handleNotificationDateSet(User user, Update update) {
         try {
-            ((Notification)this.notificationsUnderConstruction.getObjectsUnderConstructions().get(this.parseUtil.getTag(update))).setNotificationDate(LocalDate.parse(update.getCallbackQuery().getData().replace("Notification ", "")));
+            ((Notification)this.notificationsUnderConstruction.getObjectsUnderConstructions().get(this.parseUtil.getTag(update))).setDate(LocalDate.parse(update.getCallbackQuery().getData().replace("Notification ", "")));
             user.setInstanceAdditionStage(InstanceAdditionStage.NOTIFICATION_TIME);
             this.userRepository.update(user);
         } catch (DateTimeParseException var4) {

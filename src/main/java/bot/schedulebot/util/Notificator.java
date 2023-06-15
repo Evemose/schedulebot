@@ -25,7 +25,7 @@ public class Notificator {
     private final ParseUtil parseUtil;
     private final GeneralMenuStorage generalMenuStorage;
 
-    public Notificator(KeyboardGenerator keyboardGenerator, UserRepository userRepository, TasksUnderConstruction tasksUnderConstruction, ParseUtil parseUtil, GeneralMenuStorage generalMenuStorage) {
+    private Notificator(KeyboardGenerator keyboardGenerator, UserRepository userRepository, TasksUnderConstruction tasksUnderConstruction, ParseUtil parseUtil, GeneralMenuStorage generalMenuStorage) {
         this.keyboardGenerator = keyboardGenerator;
         this.botConfig = new BotConfig();
         this.userRepository = userRepository;

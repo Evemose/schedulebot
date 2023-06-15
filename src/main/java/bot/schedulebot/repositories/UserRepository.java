@@ -6,12 +6,14 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import static bot.schedulebot.config.HibernateConfig.getSession;
 
 @Repository
 public class UserRepository extends bot.schedulebot.repositories.Repository<User> {
+    protected UserRepository() {}
     public User get(String tag) {
         Session session = getSession();
         Query<User> query = session.createQuery("select u from User u where tag = :tag");

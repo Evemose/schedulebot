@@ -52,8 +52,8 @@ public class TaskService extends Service<Task> {
     private final BotConfig botConfig;
     private final TasksUnderConstruction tasksUnderConstruction;
 
-    public TaskService(UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, TasksUnderConstruction taskAdditionHelper, SubjectRepository subjectRepository, UnappointedTaskRepository unappointedTaskRepository, MenuStorage menuStorage, TaskRepository taskRepository, AppointmentRepository appointmentRepository, Converter converter, FileRepository fileRepository, AppointmentsUnderConstruction appointmentsUnderConstruction, Notificator notificator, TodayTasksInfoService todayTasksInfoService, TodayTasksInfoRepository todayTasksInfoRepository, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, TasksUnderConstruction tasksUnderConstruction, ThreadUtil threadUtil) {
-        super(taskRepository, threadUtil, parseUtil, tasksUnderConstruction, menuStorage, converter);
+    protected TaskService(UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, TasksUnderConstruction taskAdditionHelper, SubjectRepository subjectRepository, UnappointedTaskRepository unappointedTaskRepository, MenuStorage menuStorage, TaskRepository taskRepository, AppointmentRepository appointmentRepository, Converter converter, FileRepository fileRepository, AppointmentsUnderConstruction appointmentsUnderConstruction, Notificator notificator, TodayTasksInfoService todayTasksInfoService, TodayTasksInfoRepository todayTasksInfoRepository, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, TasksUnderConstruction tasksUnderConstruction, ThreadUtil threadUtil) {
+        super(taskRepository, threadUtil, parseUtil, tasksUnderConstruction, menuStorage, converter, fileRepository);
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
         this.groupRepository = groupRepository;
@@ -138,10 +138,8 @@ public class TaskService extends Service<Task> {
                     messages.add(menuStorage.getMenu(MenuMode.APPOINT_TASK, update));
                 } else {
                     Session session = HibernateConfig.getSession();
-                    todayTasksInfoRepository.getAll(session).stream().forEach(todayTasksInfo -> {
-                        todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
-                        todayTasksInfoService.updateTodayTasksInfoMessage(todayTasksInfo);
-                    });
+                    todayTasksInfoRepository.getAll(session).forEach(todayTasksInfo ->
+                            todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session));
                     session.close();
                     messages.add(menuStorage.getMenu(MenuMode.SET_TASK_DEADLINE, update));
                     messages.add(menuStorage.getMenu(MenuMode.SHOW_GROUP_TASKS, update, task.getGroup().getId()));
@@ -228,7 +226,7 @@ public class TaskService extends Service<Task> {
         session.close();
         if (tryDeleteTask(parseUtil.getTargetId(callbackData))) {
             message.setText("Task deleted");
-            resultMessagesList.add(menuStorage.getMenu(MenuMode.SHOW_GROUP_TASKS, update, groupId));
+            botConfig.editMessage(u.getChatId(), Task.getTaskMenus().get(u.getTag()), menuStorage.getMenu(MenuMode.SHOW_GROUP_TASKS, update, groupId));
         } else {
             message.setText("Task still has not been completed by some users. Do you want to force delete it (it will delete all associated appointments)?" +
                     "\n\nUsers that still have not completed task:\n\n" +
@@ -236,7 +234,8 @@ public class TaskService extends Service<Task> {
             message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getForceDeleteTaskKeyboard(task)));
         }
         botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
-        resultMessagesList.add(0, message);
+        resultMessagesList.add(message);
+        todayTasksInfoService.updateTodayTasksInfoInGroup(groupId);
     }
 
     private void handleTaskDeadlineSet(Update update, User user) {
@@ -267,7 +266,6 @@ public class TaskService extends Service<Task> {
                     group.getUnappointedTasks().add(unappointedTask);
                     TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(u.getTag(), session);
                     todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
-                    todayTasksInfoService.updateTodayTasksInfoMessage(todayTasksInfo);
                     groupRepository.update(group, session);
                 });
                 notificator.sendNotificationsToGroupUsersAboutNewAppointment(group, update, task);
@@ -297,12 +295,14 @@ public class TaskService extends Service<Task> {
         Session session = HibernateConfig.getSession();
         int groupId = taskRepository.get(parseUtil.getTargetId(callbackData), session).getGroup().getId();
         session.close();
+        Session session1 = HibernateConfig.getSession();
         forceDeleteTask(parseUtil.getTargetId(callbackData));
         Message message = new Message();
         message.setText("Task deleted");
         botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
         resultMessagesList.add(message);
-        resultMessagesList.add(menuStorage.getMenu(MenuMode.SHOW_GROUP_TASKS, update, groupId));
+        botConfig.editMessage(u.getChatId(), Task.getTaskMenus().get(u.getTag()), menuStorage.getMenu(MenuMode.SHOW_GROUP_TASKS, update, groupId));
+        todayTasksInfoService.updateTodayTasksInfo(todayTasksInfoRepository.get(u.getTag(), session1), session1);
     }
 
     public void handleTaskPropertyChange(Update update, List<Message> resultMessagesList, String callbackData, User u) {
@@ -375,20 +375,10 @@ public class TaskService extends Service<Task> {
     public void forceDeleteTask(int taskId) {
         Session session = HibernateConfig.getSession();
         List<User> users = taskRepository.get(taskId, session).getGroup().getUsers();
-
         users.forEach(user -> todayTasksInfoService.resetTodayTasksInfo(user.getTodayTasksInfo()));
-
-        appointmentRepository.getAppointmentsOfTask(taskId).stream().forEach(appointment -> appointmentRepository.delete(appointment.getId()));
-
-        unappointedTaskRepository.getUnappointedTasksOfTask(taskId).stream().forEach(unappointedTask -> unappointedTaskRepository.delete(unappointedTask.getId()));
-
+        appointmentRepository.getAppointmentsOfTask(taskId).forEach(appointment -> appointmentRepository.delete(appointment.getId()));
+        unappointedTaskRepository.getUnappointedTasksOfTask(taskId).forEach(unappointedTask -> unappointedTaskRepository.delete(unappointedTask.getId()));
         taskRepository.delete(taskId);
-
-        users.forEach(user -> {
-            todayTasksInfoService.updateTodayTasksInfo(user.getTodayTasksInfo(), session);
-            todayTasksInfoService.updateTodayTasksInfoMessage(user.getTodayTasksInfo());
-        });
-
         session.close();
     }
 

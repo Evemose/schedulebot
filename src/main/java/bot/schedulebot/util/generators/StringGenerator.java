@@ -6,6 +6,10 @@ import java.util.Random;
 
 @Component
 public class StringGenerator {
+    private StringGenerator() {
+
+    }
+
     public String generateRandomString() {
         String str = "";
         Random random = new Random();

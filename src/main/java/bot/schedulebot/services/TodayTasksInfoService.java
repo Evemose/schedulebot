@@ -2,10 +2,8 @@ package bot.schedulebot.services;
 
 import bot.schedulebot.config.BotConfig;
 import bot.schedulebot.config.HibernateConfig;
-import bot.schedulebot.entities.Appointment;
-import bot.schedulebot.entities.TodayTasksInfo;
-import bot.schedulebot.entities.UnappointedTask;
-import bot.schedulebot.entities.User;
+import bot.schedulebot.entities.*;
+import bot.schedulebot.repositories.GroupRepository;
 import bot.schedulebot.repositories.TodayTasksInfoRepository;
 import bot.schedulebot.storages.menustorages.AppointmentMenuStorage;
 import bot.schedulebot.storages.menustorages.UnappointedTaskMenuStorage;
@@ -28,14 +26,16 @@ public class TodayTasksInfoService {
     private final UnappointedTaskMenuStorage unappointedTaskMenuStorage;
     private final TextGenerator textGenerator;
     private final KeyboardGenerator keyboardGenerator;
+    private final GroupRepository groupRepository;
 
-    public TodayTasksInfoService(TodayTasksInfoRepository todayTasksInfoRepository, AppointmentMenuStorage appointmentMenuStorage, UnappointedTaskMenuStorage unappointedTaskMenuStorage, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator) {
+    protected TodayTasksInfoService(TodayTasksInfoRepository todayTasksInfoRepository, AppointmentMenuStorage appointmentMenuStorage, UnappointedTaskMenuStorage unappointedTaskMenuStorage, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, GroupRepository groupRepository) {
         this.todayTasksInfoRepository = todayTasksInfoRepository;
         botConfig = new BotConfig();
         this.appointmentMenuStorage = appointmentMenuStorage;
         this.unappointedTaskMenuStorage = unappointedTaskMenuStorage;
         this.textGenerator = textGenerator;
         this.keyboardGenerator = keyboardGenerator;
+        this.groupRepository = groupRepository;
     }
 
     public void resetTodayTasksInfo(TodayTasksInfo todayTasksInfo) {
@@ -70,6 +70,7 @@ public class TodayTasksInfoService {
                     .toList());
 
             todayTasksInfoRepository.update(todayTasksInfo, session);
+            updateTodayTasksInfoMessage(todayTasksInfo);
         }
     }
 
@@ -82,14 +83,25 @@ public class TodayTasksInfoService {
         session.close();
     }
 
-    public void updateTodayTasksInfoMessage(TodayTasksInfo todayTasksInfo) {
+    public void updateTodayTasksInfoInGroup(int groupId) {
+        Session session = HibernateConfig.getSession();
+        Group group = groupRepository.get(groupId, session);
+        group.getUsers().forEach(user -> {
+            TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(user.getId(), session);
+            if (todayTasksInfo != null) {
+                updateTodayTasksInfo(todayTasksInfo, session);
+            }
+        });
+    }
+
+    private void updateTodayTasksInfoMessage(TodayTasksInfo todayTasksInfo) {
         try {
             switch (todayTasksInfo.getMode()) {
                 case MAIN -> {
                     Message message = new Message();
                     message.setText(textGenerator.getMessageTextFromTodayTasksInfo(todayTasksInfo));
                     message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getEverydayTaskNotificationKeyboard(todayTasksInfo)));
-                    botConfig.editMessageText(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
+                    botConfig.editMessage(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
                 }
                 case APPOINTMENTS_FOR_TODAY -> {
                     appointmentMenuStorage.getAppointmentsForTodayMenu(todayTasksInfo.getId());

@@ -7,18 +7,17 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import static bot.schedulebot.config.HibernateConfig.getSession;
 
 @Repository
 public class GroupRepository extends bot.schedulebot.repositories.Repository<Group> {
-
-    private final UserRepository userRepository;
     private final StringGenerator stringGenerator;
 
-    public GroupRepository(UserRepository userRepository, StringGenerator stringGenerator) {
-        this.userRepository = userRepository;
+    @Autowired
+    protected GroupRepository(StringGenerator stringGenerator) {
         this.stringGenerator = stringGenerator;
     }
 

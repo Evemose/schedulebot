@@ -127,7 +127,7 @@ public class AppointmentMenuStorage {
         message.setText(textGenerator.getAppointmentsForTodayText(todayTasksInfo));
         message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getAppointmentsForTodayKeyboard(todayTasksInfo)));
 
-        botConfig.editMessageText(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
+        botConfig.editMessage(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
         session.close();
     }
 
@@ -139,7 +139,7 @@ public class AppointmentMenuStorage {
         message.setText(textGenerator.getAppointmentsWithDeadlineTodayText(todayTasksInfo));
         message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getAppointmentsWithDeadlineTodayKeyboard(todayTasksInfo)));
 
-        botConfig.editMessageText(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
+        botConfig.editMessage(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
         session.close();
     }
 
@@ -157,7 +157,7 @@ public class AppointmentMenuStorage {
         message.setText(textGenerator.getOutdatedAppointmentsText(todayTasksInfo));
         message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getOutdatedAppointmentsKeyboard(todayTasksInfo)));
 
-        botConfig.editMessageText(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
+        botConfig.editMessage(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
         session.close();
     }
 

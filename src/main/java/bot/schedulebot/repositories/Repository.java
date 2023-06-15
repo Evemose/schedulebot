@@ -3,12 +3,15 @@ package bot.schedulebot.repositories;
 import bot.schedulebot.config.HibernateConfig;
 import bot.schedulebot.entities.Entity;
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.NamedQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import java.lang.reflect.ParameterizedType;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class Repository<T extends Entity> {
     protected int entitiesAmount;
@@ -19,7 +22,13 @@ public abstract class Repository<T extends Entity> {
     }
 
     protected int getEntitiesAmount() {
-        return this.getAll().size();
+        try {
+            return Objects.requireNonNull(this.getAll().stream()
+                            .max(Comparator.comparingInt(Entity::getId)).orElse(null))
+                    .getId() + 1;
+        } catch (NullPointerException e) {
+            return 1;
+        }
     }
 
     public List<T> getAll() {
@@ -32,8 +41,7 @@ public abstract class Repository<T extends Entity> {
 
     public List<T> getAll(Session session) {
         Query<T> query = session.createQuery("select t from " + ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName() + " t");
-        List<T> result = query.getResultList();
-        return result;
+        return query.getResultList();
     }
 
     public T get(int id) {
@@ -48,8 +56,7 @@ public abstract class Repository<T extends Entity> {
     public T get(int id, Session session) {
         Query<T> query = session.createQuery("select t from " + ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName() + " t where t.id = :id");
         query.setParameter("id", id);
-        T result = query.uniqueResult();
-        return result;
+        return query.uniqueResult();
     }
 
     public void delete(int id) {

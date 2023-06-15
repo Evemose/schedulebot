@@ -81,7 +81,7 @@ public class TaskMenuStorage {
     private Message sendTaskMessage(Message message, Task task, Update update, InlineKeyboardMarkup markup) {
         if (task.getFile() != null) {
             File file = fileGenerator.getFileFromByteArray(task.getFile().getFile(),
-                    task.getName() + task.getFile().getFileType());
+                    task.getName().replace(":", "").replace("\\", "").replace("/", "") + task.getFile().getFileType());
             botConfig.sendDocument(parseUtil.getChatId(update),
                     new InputFile(file),
                     "*Attachment*");

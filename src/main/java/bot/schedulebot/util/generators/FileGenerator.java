@@ -8,6 +8,9 @@ import java.io.IOException;
 
 @Component
 public class FileGenerator {
+    private FileGenerator() {
+    }
+
     public File getFileFromByteArray(byte[] array, String name) {
         File file = new File(name);
         try {

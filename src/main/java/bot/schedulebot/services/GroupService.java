@@ -39,8 +39,8 @@ public class GroupService extends Service<Group> {
     private final NotificationRepository notificationRepository;
     private final BotConfig botConfig;
 
-    public GroupService(UserRepository userRepository, GroupRepository groupRepository, MenuStorage menuStorage, GroupsUnderConstruction groupAdditionHelper, ParseUtil parseUtil, TaskService taskService, SubjectRepository subjectRepository, AnnouncementRepository announcementRepository, TimersStorage timersStorage, Converter converter, NotificationRepository notificationRepository, ThreadUtil threadUtil) {
-        super(groupRepository, threadUtil, parseUtil, groupAdditionHelper, menuStorage, converter);
+    protected GroupService(UserRepository userRepository, GroupRepository groupRepository, MenuStorage menuStorage, GroupsUnderConstruction groupAdditionHelper, ParseUtil parseUtil, TaskService taskService, SubjectRepository subjectRepository, AnnouncementRepository announcementRepository, TimersStorage timersStorage, Converter converter, NotificationRepository notificationRepository, ThreadUtil threadUtil) {
+        super(groupRepository, threadUtil, parseUtil, groupAdditionHelper, menuStorage, converter, null);
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.menuStorage = menuStorage;

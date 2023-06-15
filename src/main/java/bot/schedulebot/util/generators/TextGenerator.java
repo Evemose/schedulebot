@@ -15,7 +15,8 @@ public class TextGenerator {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
 
-    public TextGenerator(TaskRepository taskRepository, UserRepository userRepository) {
+
+    private TextGenerator(TaskRepository taskRepository, UserRepository userRepository) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
     }
@@ -23,6 +24,7 @@ public class TextGenerator {
     public String getAnswerTheQuestionRequest() {
         return "Please, answer question above or stop addition process by pressing any other button";
     }
+
     public String getStringOfUsersWithTask(int taskId) {
         String res = "";
         Session session = HibernateConfig.getSession();
@@ -149,9 +151,9 @@ public class TextGenerator {
 
     public String getNotificationMenuText(Notification notification) {
         String res = "*Text:* " + notification.getText().replace("*", "\\*") +
-                "\n\n*Time:* " + notification.getNotificationTime() +
+                "\n\n*Time:* " + notification.getTime() +
                 "\n\n*Frequency:* " + notification.getFrequency() +
-                "\n\n*Next notification date:* " + notification.getNotificationDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+                "\n\n*Next notification date:* " + notification.getDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
         return res;
     }
 }

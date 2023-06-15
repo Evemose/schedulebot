@@ -43,9 +43,10 @@ public class AppointmentService extends Service<Appointment> {
     private final TaskRepository taskRepository;
     private final TasksUnderConstruction tasksUnderConstruction;
     private final AppointmentsUnderConstruction appointmentsUnderConstruction;
+    private final TaskService taskService;
 
-    public AppointmentService(AppointmentsUnderConstruction appointmentAdditionHelper, Converter converter, AppointmentRepository appointmentRepository, UnappointedTaskRepository unappointedTaskRepository, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, KeyboardGenerator keyboardGenerator, TodayTasksInfoRepository todayTasksInfoRepository, ThreadUtil threadUtil, TodayTasksInfoService todayTasksInfoService, TaskRepository taskRepository, TasksUnderConstruction tasksUnderConstruction, AppointmentsUnderConstruction appointmentsUnderConstruction) {
-        super(appointmentRepository, threadUtil, parseUtil, appointmentsUnderConstruction, menuStorage, converter);
+    protected AppointmentService(AppointmentsUnderConstruction appointmentAdditionHelper, Converter converter, AppointmentRepository appointmentRepository, UnappointedTaskRepository unappointedTaskRepository, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, KeyboardGenerator keyboardGenerator, TodayTasksInfoRepository todayTasksInfoRepository, ThreadUtil threadUtil, TodayTasksInfoService todayTasksInfoService, TaskRepository taskRepository, TasksUnderConstruction tasksUnderConstruction, AppointmentsUnderConstruction appointmentsUnderConstruction, TaskService taskService) {
+        super(appointmentRepository, threadUtil, parseUtil, appointmentsUnderConstruction, menuStorage, converter, null);
         this.appointmentObjectsUnderConstruction = appointmentAdditionHelper;
         this.appointmentRepository = appointmentRepository;
         this.unappointedTaskRepository = unappointedTaskRepository;
@@ -59,6 +60,7 @@ public class AppointmentService extends Service<Appointment> {
         this.taskRepository = taskRepository;
         this.tasksUnderConstruction = tasksUnderConstruction;
         this.appointmentsUnderConstruction = appointmentsUnderConstruction;
+        this.taskService = taskService;
     }
 
     @Override
@@ -141,7 +143,7 @@ public class AppointmentService extends Service<Appointment> {
             unappointedTaskRepository.delete(unappointedTask.getId());
         }
         todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
-        todayTasksInfoService.updateTodayTasksInfoMessage(todayTasksInfo);
+
         user.setInstanceAdditionStage(InstanceAdditionStage.NONE);
 
         userRepository.update(user, session);
@@ -181,7 +183,6 @@ public class AppointmentService extends Service<Appointment> {
             todayTasksInfoService.resetTodayTasksInfo(todayTasksInfo);
             appointmentRepository.delete(id);
             todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
-            todayTasksInfoService.updateTodayTasksInfoMessage(todayTasksInfo);
             session.close();
         }
     }
@@ -196,7 +197,7 @@ public class AppointmentService extends Service<Appointment> {
             session.close();
             resultMessagesList.add(menuStorage.getMenu(MenuMode.NO_SUBJECTS_FOR_PERSONAL_APPOINTMENT, update));
         } else {
-            resultMessagesList.addAll(handleAddition(InstanceAdditionStage.TASK_START, update, null));
+            resultMessagesList.addAll(taskService.handleAddition(InstanceAdditionStage.TASK_START, update, null));
             Appointment appointment = new Appointment();
             appointment.setUser(u);
             appointment.setTask(tasksUnderConstruction.getObjectsUnderConstructions().get(u.getTag()));
@@ -245,7 +246,7 @@ public class AppointmentService extends Service<Appointment> {
             TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(appointment.getUser().getTag(), session1);
             todayTasksInfoService.resetTodayTasksInfo(todayTasksInfo);
             appointmentRepository.delete(id);
-            todayTasksInfoService.updateTodayTasksInfoMessage(todayTasksInfo);
+            todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session1);
             session1.close();
         }
     }
@@ -290,7 +291,7 @@ public class AppointmentService extends Service<Appointment> {
             appointment.setAppointedDate(appointment.getTask().getDeadline());
             appointmentRepository.update(appointment);
             try {
-                botConfig.editMessageText(u.getChatId(),
+                botConfig.editMessage(u.getChatId(),
                         update.getCallbackQuery().getMessage().getMessageId(),
                         menuStorage.getMenu(MenuMode.SHOW_APPOINTMENT_NO_ATTACHEMETS, update, appointment.getId()));
             } catch (RuntimeException e) {
@@ -301,7 +302,6 @@ public class AppointmentService extends Service<Appointment> {
 
         if (todayTasksInfo != null) {
             todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
-            todayTasksInfoService.updateTodayTasksInfoMessage(todayTasksInfo);
         }
 
         session.close();
@@ -317,12 +317,11 @@ public class AppointmentService extends Service<Appointment> {
         TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(u.getTag(), session);
         if (todayTasksInfo != null) {
             todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
-            todayTasksInfoService.updateTodayTasksInfoMessage(todayTasksInfo);
         }
         session.close();
 
         try {
-            botConfig.editMessageText(u.getChatId(),
+            botConfig.editMessage(u.getChatId(),
                     update.getCallbackQuery().getMessage().getMessageId(),
                     menuStorage.getMenu(MenuMode.SHOW_APPOINTMENT_NO_ATTACHEMETS, update, appointment.getId()));
         } catch (RuntimeException e) {

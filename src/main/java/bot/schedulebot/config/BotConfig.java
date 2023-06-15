@@ -20,7 +20,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Component
 public class BotConfig extends TelegramLongPollingBot {
@@ -62,12 +61,12 @@ public class BotConfig extends TelegramLongPollingBot {
 
     public List<Integer> sendMessagesList(String chatId, List<Message> messagesList) {
         List<Integer> messageIds = new ArrayList<>();
-        messagesList.stream().filter(Objects::nonNull).forEach(message -> messageIds.add(sendMessage(chatId, message)));
+        messagesList.forEach(message -> messageIds.add(sendMessage(chatId, message)));
         return messageIds;
     }
 
     public int sendMessage(String chatId, Message message) {
-        {
+        if (message != null) {
             try {
                 if (message.hasReplyMarkup()) {
                     return execute(SendMessage.builder()
@@ -83,10 +82,11 @@ public class BotConfig extends TelegramLongPollingBot {
                             .parseMode("Markdown")
                             .build()).getMessageId();
                 }
-            }
-            catch (TelegramApiException e) {
+            } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
+        } else {
+            return 0;
         }
     }
 
@@ -144,20 +144,21 @@ public class BotConfig extends TelegramLongPollingBot {
         }
     }
 
-    public void editMessageText(String chatId, int messageId, Message message) {
+    public void editMessage(String chatId, int messageId, Message message) {
         EditMessageText editMessageText = new EditMessageText();
         editMessageText.setChatId(chatId);
         editMessageText.setParseMode("Markdown");
         editMessageText.setMessageId(messageId);
         editMessageText.setText(message.getText());
         editMessageText.setReplyMarkup(message.getReplyMarkup());
-        EditMessageCaption editMessageCaption = new EditMessageCaption();
 
+        EditMessageCaption editMessageCaption = new EditMessageCaption();
         editMessageCaption.setChatId(chatId);
         editMessageCaption.setParseMode("Markdown");
         editMessageCaption.setMessageId(messageId);
         editMessageCaption.setCaption(message.getText());
         editMessageCaption.setReplyMarkup(message.getReplyMarkup());
+
         try {
             execute(editMessageText);
         } catch (TelegramApiException e) {

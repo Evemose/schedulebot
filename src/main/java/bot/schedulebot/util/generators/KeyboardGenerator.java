@@ -10,6 +10,9 @@ import java.util.List;
 
 @Component
 public class KeyboardGenerator {
+    private KeyboardGenerator() {
+
+    }
 
     public List<List<InlineKeyboardButton>> getKeyboardFromAppointmentsList(List<Appointment> appointments, int id, boolean isGroupMode) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -184,6 +187,16 @@ public class KeyboardGenerator {
         keyboard.add(createSingleButtonRow("Change task image", "Change task image " + taskId));
         keyboard.add(createSingleButtonRow("Change task file", "Change task file " + taskId));
         keyboard.add(createSingleButtonRow("Back", "Show task " + taskId));
+        return keyboard;
+    }
+
+    public List<List<InlineKeyboardButton>> getNotificationEditKeyboard(int id) {
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        keyboard.add(createSingleButtonRow("Edit text", "Change notification text " + id));
+        keyboard.add(createSingleButtonRow("Edit time", "Change notification time " + id));
+        keyboard.add(createSingleButtonRow("Edit frequency", "Change notification frequency " + id));
+        keyboard.add(createSingleButtonRow("Edit next date", "Change notification date " + id));
+        keyboard.add(createSingleButtonRow("Back", "Show notification " + id));
         return keyboard;
     }
 

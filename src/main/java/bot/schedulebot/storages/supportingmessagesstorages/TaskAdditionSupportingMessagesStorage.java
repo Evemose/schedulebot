@@ -14,10 +14,12 @@ import java.util.List;
 @Component
 public class TaskAdditionSupportingMessagesStorage implements AdditionSupportingMessagesStorage {
     private final KeyboardGenerator keyboardGenerator;
+    private final GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage;
 
-    public TaskAdditionSupportingMessagesStorage(KeyboardGenerator keyboardGenerator) {
+    private TaskAdditionSupportingMessagesStorage(KeyboardGenerator keyboardGenerator, GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage) {
 
         this.keyboardGenerator = keyboardGenerator;
+        this.generalAdditionSupportingMessagesStorage = generalAdditionSupportingMessagesStorage;
     }
 
     @Override
@@ -50,7 +52,7 @@ public class TaskAdditionSupportingMessagesStorage implements AdditionSupporting
     }
 
     private Message getSkipDocumentStageOfAdditionMessage() {
-        return getYesNoKeyboard("image");
+        return generalAdditionSupportingMessagesStorage.getYesNoMessage("image");
     }
 
     private Message getDeadlineStageOfAdditionMessage() {
@@ -90,23 +92,8 @@ public class TaskAdditionSupportingMessagesStorage implements AdditionSupporting
     }
 
     private Message getStartOfAdditionMessage() {
-        return getYesNoKeyboard("document");
+        return generalAdditionSupportingMessagesStorage.getYesNoMessage("file");
     }
 
-    private Message getYesNoKeyboard(String base) {
-        Message message = new Message();
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        List<String> text = new ArrayList<>();
-        List<String> callBack = new ArrayList<>();
-        text.add("Yes");
-        text.add("No");
-        callBack.add("Task set " + base + " yes");
-        callBack.add("Task set " + base + " no");
-        keyboard.add(keyboardGenerator.createManyButtonsRow(text, callBack));
-        markup.setKeyboard(keyboard);
-        message.setText("Do you have any " + base + " for this task?");
-        message.setReplyMarkup(markup);
-        return message;
-    }
+
 }

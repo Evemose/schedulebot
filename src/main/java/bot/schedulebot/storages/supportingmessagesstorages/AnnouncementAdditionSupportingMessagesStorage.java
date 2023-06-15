@@ -13,10 +13,10 @@ import java.util.List;
 
 @Component
 public class AnnouncementAdditionSupportingMessagesStorage implements AdditionSupportingMessagesStorage {
-    private final KeyboardGenerator keyboardGenerator;
+    private final GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage;
 
-    public AnnouncementAdditionSupportingMessagesStorage(KeyboardGenerator keyboardGenerator) {
-        this.keyboardGenerator = keyboardGenerator;
+    public AnnouncementAdditionSupportingMessagesStorage(GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage) {
+        this.generalAdditionSupportingMessagesStorage = generalAdditionSupportingMessagesStorage;
     }
 
     @Override
@@ -43,7 +43,7 @@ public class AnnouncementAdditionSupportingMessagesStorage implements AdditionSu
     }
 
     private Message getSkipDocumentStageOfAdditionMessage() {
-        return getYesNoKeyboard("image");
+        return generalAdditionSupportingMessagesStorage.getYesNoMessage("image");
     }
 
     private Message getTitleStageOfAdditionMessage() {
@@ -65,23 +65,7 @@ public class AnnouncementAdditionSupportingMessagesStorage implements AdditionSu
     }
 
     private Message getStartOfAdditionMessage() {
-        return getYesNoKeyboard("document");
+        return generalAdditionSupportingMessagesStorage.getYesNoMessage("file");
     }
 
-    private Message getYesNoKeyboard(String base) {
-        Message message = new Message();
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        List<String> text = new ArrayList<>();
-        List<String> callBack = new ArrayList<>();
-        text.add("Yes");
-        text.add("No");
-        callBack.add("Announcement set " + base + " yes");
-        callBack.add("Announcement set " + base + " no");
-        keyboard.add(keyboardGenerator.createManyButtonsRow(text, callBack));
-        markup.setKeyboard(keyboard);
-        message.setText("Do you have any " + base + " for this announcement?");
-        message.setReplyMarkup(markup);
-        return message;
-    }
 }

@@ -41,13 +41,7 @@ public class NotificationMenuStorage {
         Session session = HibernateConfig.getSession();
         Notification notification = notificationRepository.get(id, session);
         message.setText(textGenerator.getNotificationMenuText(notification));
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        keyboard.add(keyboardGenerator.createSingleButtonRow("Edit text", "Change notification text " + id));
-        keyboard.add(keyboardGenerator.createSingleButtonRow("Edit time", "Change notification time " + id));
-        keyboard.add(keyboardGenerator.createSingleButtonRow("Edit frequency", "Change notification frequency " + id));
-        keyboard.add(keyboardGenerator.createSingleButtonRow("Edit next date", "Change notification date " + id));
-        keyboard.add(keyboardGenerator.createSingleButtonRow("Back", "Show notification " + id));
-        message.setReplyMarkup(new InlineKeyboardMarkup(keyboard));
+        message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getNotificationEditKeyboard(id)));
         session.close();
         return message;
     }
