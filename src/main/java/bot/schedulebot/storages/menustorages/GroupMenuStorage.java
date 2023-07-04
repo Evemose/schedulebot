@@ -149,7 +149,7 @@ public class GroupMenuStorage {
 
         message.setText("*Groups list:*\n");
 
-        user.getGroups().stream().forEach(group -> {
+        user.getGroups().forEach(group -> {
             menuInlineKeyboard.add(keyboardGenerator.createSingleButtonRow(group.getName(), "Show group " + group.getId()));
             message.setText(message.getText() + group.getName() + "\n");
         });
@@ -174,14 +174,11 @@ public class GroupMenuStorage {
 
         message.setText("*Users in " + group.getName() + "*");
 
-        users.stream().forEach(user -> {
-            message.setText(message.getText() + "\n" + user.getName() + " " + groupRepository.getUserRole(user.getId(), groupId));
-        });
+        users.forEach(user -> message.setText(message.getText() + "\n" + user.getName() + " " + groupRepository.getUserRole(user.getId(), groupId)));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-//        keyboard.add(keyboardGenerator.createSingleButtonRow("Add admin", "Add admin to " + groupId));
         if (groupRepository.getUserRole(userRepository.get(parseUtil.getTag(update)).getId(), groupId) != Role.DEFAULT)
             keyboard.add(keyboardGenerator.createSingleButtonRow("Kick user", "Kick user from " + groupId));
         keyboard.add(keyboardGenerator.createSingleButtonRow("Back", "Show group " + groupId));
@@ -300,17 +297,17 @@ public class GroupMenuStorage {
         keyboard.add(keyboardGenerator.createSingleButtonRow("Add notification",
                 "Add notification to " + groupId));
 
-        String text = "*Notifications in group:*";
+        StringBuilder text = new StringBuilder("*Notifications in group:*");
         for (Notification notification : notifications) {
-            text += "\n" + notification.getTitle();
+            text.append("\n").append(notification.getTitle());
             keyboard.add(keyboardGenerator.createSingleButtonRow(notification.getTitle(),
                     "Show notification " + notification.getId()));
         }
         keyboard.add(keyboardGenerator.createSingleButtonRow("Back",
                 "Show group " + groupId));
-        text += "\n\n*Choose option:*";
+        text.append("\n\n*Choose option:*");
 
-        message.setText(text);
+        message.setText(text.toString());
         if (notifications.isEmpty()) {
             message.setText("*No repeated notifications in this group*");
         }
@@ -335,9 +332,7 @@ public class GroupMenuStorage {
             message.setText("*Choose subject:*");
         }
 
-        group.getSubjects().stream().forEach(subject -> {
-            keyboard.add(keyboardGenerator.createSingleButtonRow(subject.getName(), callBackBase + " " + subject.getId()));
-        });
+        group.getSubjects().forEach(subject -> keyboard.add(keyboardGenerator.createSingleButtonRow(subject.getName(), callBackBase + " " + subject.getId())));
         keyboard.add(keyboardGenerator.createSingleButtonRow("Back", "Show subjects in group " + groupId));
 
         markup.setKeyboard(keyboard);
@@ -387,14 +382,12 @@ public class GroupMenuStorage {
             message.setText("*No active tasks in group*\n");
         } else {
             message.setText("*Active tasks:*\n");
-            tasks.stream().forEach(task -> message.setText(message.getText() + task.getName() + "\n"));
+            tasks.forEach(task -> message.setText(message.getText() + task.getName() + "\n"));
         }
 
         message.setText(message.getText() + "\n*Choose option: *\n");
 
-        group.getTasks().stream().forEach(task -> {
-            keyboard.add(keyboardGenerator.createSingleButtonRow(task.getName(), "Show task " + task.getId()));
-        });
+        group.getTasks().forEach(task -> keyboard.add(keyboardGenerator.createSingleButtonRow(task.getName(), "Show task " + task.getId())));
 
         keyboard.add(keyboardGenerator.createSingleButtonRow("Add task", "Add task to group " + groupId));
         keyboard.add(keyboardGenerator.createSingleButtonRow("Add personal task", "Add personal task in group " + groupId));
@@ -417,9 +410,7 @@ public class GroupMenuStorage {
 
         message.setText(textGenerator.getMessageTextFromAnnouncementsList(announcements) + (isManageMode || announcements.isEmpty() ? "\n*Choose option:*" : "\n*Choose which you want to view:*"));
 
-        group.getAnnouncements().stream().forEach(announcement -> {
-            keyboard.add(keyboardGenerator.createSingleButtonRow(announcement.getTitle(), "Show announcement " + (isManageMode ? "(manage) " : "") + announcement.getId()));
-        });
+        group.getAnnouncements().forEach(announcement -> keyboard.add(keyboardGenerator.createSingleButtonRow(announcement.getTitle(), "Show announcement " + (isManageMode ? "(manage) " : "") + announcement.getId())));
         if (isManageMode) {
             keyboard.add(keyboardGenerator.createSingleButtonRow("Add announcement", "Add announcement to group " + groupId));
         }
@@ -439,9 +430,7 @@ public class GroupMenuStorage {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        group.getImportantInfo().stream().forEach(announcement -> {
-            keyboard.add(keyboardGenerator.createSingleButtonRow(announcement.getTitle(), "Show announcement (impinf) " + announcement.getId()));
-        });
+        group.getImportantInfo().forEach(announcement -> keyboard.add(keyboardGenerator.createSingleButtonRow(announcement.getTitle(), "Show announcement (impinf) " + announcement.getId())));
         keyboard.add(keyboardGenerator.createSingleButtonRow("Back", "Show group " + groupId));
 
         markup.setKeyboard(keyboard);

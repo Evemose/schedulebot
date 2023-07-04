@@ -27,7 +27,7 @@ public class ParseUtil {
         Pattern pattern = Pattern.compile("\\d+");
         Matcher matcher = pattern.matcher(callbackData);
         matcher.find();
-        return Integer.valueOf(matcher.group(0));
+        return Integer.parseInt(matcher.group(0));
     }
 
     public int getTargetId(String callbackData, int number) {
@@ -35,7 +35,7 @@ public class ParseUtil {
         Matcher matcher = pattern.matcher(callbackData);
         for (int i = 0; i < number; i++)
             matcher.find();
-        return Integer.valueOf(matcher.group(0));
+        return Integer.parseInt(matcher.group(0));
     }
 
     public String getTag(Update update) {
@@ -45,6 +45,7 @@ public class ParseUtil {
 
     public File getMessageImage(Update update) {
         PhotoSize photoSize = update.getMessage().getPhoto().stream().max(Comparator.comparing(PhotoSize::getFileSize)).orElse(null);
+        assert photoSize != null;
         String fileId = photoSize.getFileId();
         GetFile getFile = new GetFile();
         getFile.setFileId(fileId);
@@ -74,9 +75,7 @@ public class ParseUtil {
             resultFile.setFile(Files.readAllBytes(file.toPath()));
             resultFile.setFileType(tgFile.getFilePath().substring(tgFile.getFilePath().lastIndexOf(".")));
             file.delete();
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (TelegramApiException | IOException e) {
             throw new RuntimeException(e);
         }
         return resultFile;

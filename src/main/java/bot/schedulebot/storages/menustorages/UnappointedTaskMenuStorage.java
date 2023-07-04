@@ -21,7 +21,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.io.File;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Component
@@ -74,19 +73,11 @@ public class UnappointedTaskMenuStorage {
         if (unappointedTask.getTask().getImage() != null) {
             botConfig.sendPhoto(update.getCallbackQuery().getMessage().getChatId().toString(),
                     new InputFile(converter.convertJsonStringToFile(unappointedTask.getTask().getImage())),
-                    ("*Name:* " + unappointedTask.getTask().getName() +
-                            "\n\n*Subject:* " + unappointedTask.getTask().getSubject().getName() +
-                            "\n\n*Description:* " + unappointedTask.getTask().getDescription() +
-                            (unappointedTask.getUser().isGroupMode() || unappointedTask.getGroup() == null ? "" : "\n\n*Group:* " + unappointedTask.getGroup().getName()) +
-                            "\n\n*Deadline:* " + unappointedTask.getTask().getDeadline().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))),
+                    unappointedTask.toString(),
                     markup);
             message = null;
         } else {
-            message.setText("*Name:* " + unappointedTask.getTask().getName() +
-                    "\n\n*Subject:* " + unappointedTask.getTask().getSubject().getName() +
-                    "\n\n*Description:* " + unappointedTask.getTask().getDescription() +
-                    (unappointedTask.getUser().isGroupMode() || unappointedTask.getGroup() == null ? "" : "\n\n*Group: *" + unappointedTask.getGroup().getName()) +
-                    "\n\n*Deadline:* " + unappointedTask.getTask().getDeadline().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+            message.setText(unappointedTask.toString());
             message.setReplyMarkup(markup);
         }
 

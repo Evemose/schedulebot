@@ -8,6 +8,7 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 @jakarta.persistence.Entity
 @Getter
@@ -38,4 +39,11 @@ public class Notification implements Serializable, Entity {
             inverseJoinColumns = @JoinColumn(name = "group_id"),
             joinColumns = @JoinColumn(name = "notification_id", unique = true))
     private Group group;
+
+    public String toString() {
+        return "*Text:* " + text.replace("*", "\\*") +
+                "\n\n*Time:* " + time +
+                "\n\n*Frequency:* " + frequency +
+                "\n\n*Next notification date:* " + date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+    }
 }

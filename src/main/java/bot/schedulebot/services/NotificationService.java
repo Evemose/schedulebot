@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class NotificationService extends bot.schedulebot.services.Service<Notification> {
-    private final NotificationsUnderConstruction notificationsUnderConstruction;
     private final ParseUtil parseUtil;
     private final UserRepository userRepository;
     private final MenuStorage menuStorage;
@@ -44,7 +43,6 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
 
     protected NotificationService(NotificationsUnderConstruction notificationsUnderConstruction, Converter converter, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, GroupRepository groupRepository, NotificationRepository notificationRepository, KeyboardGenerator keyboardGenerator, TimersStorage timersStorage, ThreadUtil threadUtil, ClassFieldsStorage classFieldsStorage) {
         super(notificationRepository, threadUtil, parseUtil, notificationsUnderConstruction, menuStorage, converter, classFieldsStorage, null, userRepository);
-        this.notificationsUnderConstruction = notificationsUnderConstruction;
         this.parseUtil = parseUtil;
         this.userRepository = userRepository;
         this.menuStorage = menuStorage;
@@ -80,10 +78,10 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
             public void run() {
                 chatIds.forEach((chatId) -> {
                     Message message = new Message();
-                    message.setText(notification.getText());
+                    message.setText("*" + notification.getTitle() + "*\n\n" + notification.getText());
                     message.setReplyMarkup(new InlineKeyboardMarkup(NotificationService.this.keyboardGenerator.getDeleteButtonKeyboard()));
                     notification.setDate(LocalDate.now().plusDays(notification.getFrequency()));
-                    List<Message> messages = new ArrayList();
+                    List<Message> messages = new ArrayList<>();
                     messages.add(message);
                     NotificationService.this.botConfig.sendMessagesList(chatId, messages);
                 });

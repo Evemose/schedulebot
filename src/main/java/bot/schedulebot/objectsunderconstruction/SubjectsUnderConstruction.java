@@ -5,4 +5,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SubjectsUnderConstruction extends ObjectsUnderConstruction<Subject> {
+    public SubjectsUnderConstruction() {
+    }
 }

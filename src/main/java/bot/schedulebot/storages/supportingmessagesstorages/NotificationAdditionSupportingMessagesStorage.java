@@ -36,9 +36,7 @@ public class NotificationAdditionSupportingMessagesStorage implements AdditionSu
             case NOTIFICATION_FREQUENCY -> {
                 return getFrequencyStageOfAdditionMessage();
             }
-            default -> {
-                throw new RuntimeException("Wrong instance addition stage (notification supporting message)");
-            }
+            default -> throw new RuntimeException("Wrong instance addition stage (notification supporting message)");
         }
     }
 

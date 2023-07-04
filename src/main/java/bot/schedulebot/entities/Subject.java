@@ -13,7 +13,7 @@ import java.util.List;
 @jakarta.persistence.Entity
 @Table(name = "subjects")
 @EqualsAndHashCode
-public class Subject implements Entity, Serializable, Cloneable {
+public class Subject implements Entity, Serializable {
     @Id
     //@GeneratedValue
     @Column(name = "id")
@@ -35,4 +35,8 @@ public class Subject implements Entity, Serializable, Cloneable {
 
     @OneToMany(mappedBy = "subject", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Task> tasks;
+
+    public String toString() {
+        return name;
+    }
 }

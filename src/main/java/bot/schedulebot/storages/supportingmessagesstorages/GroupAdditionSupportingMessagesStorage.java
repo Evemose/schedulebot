@@ -11,12 +11,8 @@ public class GroupAdditionSupportingMessagesStorage implements AdditionSupportin
     public Message getMessageByAdditionStage(InstanceAdditionStage instanceAdditionStage, Update update) {
         Message message = new Message();
         switch (instanceAdditionStage) {
-            case GROUP_START -> {
-                message = getStartOfAdditionMessage();
-            }
-            case GROUP_NAME -> {
-                message = getNameStageOfAdditionMessage();
-            }
+            case GROUP_START -> message = getStartOfAdditionMessage();
+            case GROUP_NAME -> message = getNameStageOfAdditionMessage();
         }
         return message;
     }

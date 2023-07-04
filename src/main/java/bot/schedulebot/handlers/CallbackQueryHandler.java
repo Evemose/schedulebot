@@ -7,7 +7,6 @@ import bot.schedulebot.entities.User;
 import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.enums.TodayTasksInfoMode;
-import bot.schedulebot.objectsunderconstruction.AppointmentsUnderConstruction;
 import bot.schedulebot.objectsunderconstruction.SubjectsUnderConstruction;
 import bot.schedulebot.repositories.TodayTasksInfoRepository;
 import bot.schedulebot.repositories.UserRepository;
@@ -28,7 +27,6 @@ public class CallbackQueryHandler {
     private final MenuStorage menuStorage;
     private final ServiceController serviceController;
     private final ParseUtil parseUtil;
-    private final AppointmentsUnderConstruction appointmentsUnderConstruction;
     private final BotConfig botConfig;
     private final GroupService groupService;
     private final AppointmentService appointmentService;
@@ -40,12 +38,11 @@ public class CallbackQueryHandler {
     private final GroupMenuStorage groupMenuStorage;
     private final SubjectsUnderConstruction subjectsUnderConstruction;
 
-    public CallbackQueryHandler(UserRepository userRepository, MenuStorage menuStorage, ServiceController serviceController, ParseUtil parseUtil, AppointmentsUnderConstruction appointmentsUnderConstruction, GroupService groupService, AppointmentService appointmentService, TaskService taskService, AnnouncementService announcementService, TodayTasksInfoRepository todayTasksInfoRepository, NotificationService notificationService, SubjectService subjectService, GroupMenuStorage groupMenuStorage, SubjectsUnderConstruction subjectsUnderConstruction) {
+    public CallbackQueryHandler(UserRepository userRepository, MenuStorage menuStorage, ServiceController serviceController, ParseUtil parseUtil, GroupService groupService, AppointmentService appointmentService, TaskService taskService, AnnouncementService announcementService, TodayTasksInfoRepository todayTasksInfoRepository, NotificationService notificationService, SubjectService subjectService, GroupMenuStorage groupMenuStorage, SubjectsUnderConstruction subjectsUnderConstruction) {
         this.userRepository = userRepository;
         this.menuStorage = menuStorage;
         this.serviceController = serviceController;
         this.parseUtil = parseUtil;
-        this.appointmentsUnderConstruction = appointmentsUnderConstruction;
         this.botConfig = new BotConfig();
         this.groupService = groupService;
         this.appointmentService = appointmentService;
@@ -64,32 +61,22 @@ public class CallbackQueryHandler {
         User u = userRepository.get(update.getCallbackQuery().getFrom().getUserName());
         if (callbackData.startsWith("Add")) u.setMode("Add");
         else if (callbackData.startsWith("Change")) u.setMode("Edit");
-        if (!callbackData.matches("yes|no")) {
+        if (!callbackData.matches("yes|no|Notification.*")) {
             u.setInstanceAdditionStage(InstanceAdditionStage.NONE);
             userRepository.update(u);
         }
         switch (callbackData) {
-            case "Show groups menu" -> {
-                resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUPS_MENU, update, userRepository.get(parseUtil.getTag(update)).getId()));
-            }
-            case "Show users groups" -> {
-                resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUPS_INDEX_MENU, update));
-            }
-            case "Create group" -> {
-                groupService.handleAdditionStart(update);
-            }
+            case "Show groups menu" -> resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUPS_MENU, update, userRepository.get(parseUtil.getTag(update)).getId()));
+            case "Show users groups" -> resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUPS_INDEX_MENU, update));
+            case "Create group" -> groupService.handleAdditionStart(update);
             case "Show group join menu" -> {
                 groupMenuStorage.handleGroupJoinMenuProvision(update, resultMessagesList);
                 u.setMode("None");
                 u.setInstanceAdditionStage(InstanceAdditionStage.GROUP_JOIN);
                 userRepository.update(u);
             }
-            case "yes", "no" -> {
-                serviceController.handleAddition(u.getInstanceAdditionStage(), update, u.getMode());
-            }
-            case "Delete this" -> {
-                botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
-            }
+            case "yes", "no" -> serviceController.handleAddition(u.getInstanceAdditionStage(), update, u.getMode());
+            case "Delete this" -> botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
             default -> {
                 if (callbackData.matches("Show group \\d+")) {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));

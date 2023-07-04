@@ -3,7 +3,6 @@ package bot.schedulebot.handlers;
 import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.MenuStorage;
-import bot.schedulebot.util.ParseUtil;
 import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -19,7 +18,7 @@ public class MessageHandler {
     private final ServiceController mainService;
     private final CallbackQueryHandler callbackQueryHandler;
 
-    public MessageHandler(CommandHandler commandHandler, MenuStorage menuStorage, UserRepository userRepository, ServiceController mainAdditionHandler, ParseUtil parseUtil, CallbackQueryHandler callbackQueryHandler) {
+    public MessageHandler(CommandHandler commandHandler, MenuStorage menuStorage, UserRepository userRepository, ServiceController mainAdditionHandler, CallbackQueryHandler callbackQueryHandler) {
         this.commandHandler = commandHandler;
         this.menuStorage = menuStorage;
         this.userRepository = userRepository;

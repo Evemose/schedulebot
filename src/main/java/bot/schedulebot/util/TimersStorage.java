@@ -13,7 +13,7 @@ import java.util.Timer;
 
 @Component
 public class TimersStorage {
-    private final Map<Integer, Timer> repeatedNotificationTimers = new HashMap();
+    private final Map<Integer, Timer> repeatedNotificationTimers = new HashMap<>();
 
     private TimersStorage() {
     }

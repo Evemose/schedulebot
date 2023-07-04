@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,4 +52,11 @@ public class Task implements Entity, Serializable {
     @Transient
     @Getter
     private User targetUser;
+    @Override
+    public String toString() {
+        return  "*Name:* " + name +
+                "\n\n*Subject:* " + subject.toString() +
+                "\n\n*Description:* " + description +
+                "\n\n*Deadline:* " + deadline.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+    }
 }

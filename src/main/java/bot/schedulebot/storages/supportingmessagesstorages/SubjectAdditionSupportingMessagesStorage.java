@@ -10,12 +10,8 @@ public class SubjectAdditionSupportingMessagesStorage implements AdditionSupport
     public Message getMessageByAdditionStage(InstanceAdditionStage instanceAdditionStage, Update update) {
         Message message = new Message();
         switch (instanceAdditionStage) {
-            case SUBJECT_START -> {
-                message = getStartOfAdditionMessage();
-            }
-            case SUBJECT_NAME -> {
-                message = getNameStageOfAdditionMessage();
-            }
+            case SUBJECT_START -> message = getStartOfAdditionMessage();
+            case SUBJECT_NAME -> message = getNameStageOfAdditionMessage();
         }
         return message;
     }

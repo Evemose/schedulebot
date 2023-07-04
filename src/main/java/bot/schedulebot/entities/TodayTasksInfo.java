@@ -64,4 +64,13 @@ public class TodayTasksInfo implements Entity, Serializable {
             joinColumns = @JoinColumn(name = "tasks_info_id"),
             inverseJoinColumns = @JoinColumn(name = "appointment_id", unique = true))
     private List<Appointment> outdatedAppointments;
+
+    @Override
+    public String toString() {
+        return appointmentsForToday.size() + " appointment" + (appointmentsForToday.size() != 1 ? "s" : "") + " for today\n\n"
+                + appointmentsWithDeadlineToday.size() + " task" + (appointmentsWithDeadlineToday.size() != 1 ? "s" : "") + " that you have appointed for later, but " + (appointmentsForToday.size() != 1 ? "their" : "its") + " deadline is today\n\n"
+                + unappointedTasksWithDeadlineToday.size() + " task" + (unappointedTasksWithDeadlineToday.size() != 1 ? "s" : "") + ", that you have not appointed for any date, but their deadline is today\n\n"
+                + outdatedUnappointedTasks.size() + " outdated task" + (outdatedUnappointedTasks.size() != 1 ? "s" : "") + ", that you have not appointed for any date\n\n"
+                + outdatedAppointments.size() + " outdated appointment" + (outdatedAppointments.size() != 1 ? "s" : "");
+    }
 }

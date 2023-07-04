@@ -37,12 +37,12 @@ public class BotConfig extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "schedule_toDobot";
+        return botName;
     }
 
     @Override
     public String getBotToken() {
-        return "5647670037:AAFanqwdKjo7BjfULdJfEQ8wOesXjDIs6RM";
+        return botToken;
     }
 
     @Override

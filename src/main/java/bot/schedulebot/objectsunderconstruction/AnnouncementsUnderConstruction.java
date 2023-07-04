@@ -6,6 +6,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class AnnouncementsUnderConstruction extends ObjectsUnderConstruction<Announcement> {
 
-    public AnnouncementsUnderConstruction() {
+    private AnnouncementsUnderConstruction() {
     }
 }

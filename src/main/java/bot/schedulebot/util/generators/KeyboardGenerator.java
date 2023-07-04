@@ -16,11 +16,9 @@ public class KeyboardGenerator {
 
     public List<List<InlineKeyboardButton>> getKeyboardFromAppointmentsList(List<Appointment> appointments, int id, boolean isGroupMode) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        appointments.stream().forEach(appointment -> {
-            keyboard.add(createSingleButtonRow(
-                    appointment.getTask().getName(),
-                    "Show appointment " + appointment.getId()));
-        });
+        appointments.forEach(appointment -> keyboard.add(createSingleButtonRow(
+                appointment.getTask().getName(),
+                "Show appointment " + appointment.getId())));
         keyboard.add(createSingleButtonRow(
                 "Back",
                 (isGroupMode ? "Show group " : "Show main menu of ") + id));
@@ -29,11 +27,9 @@ public class KeyboardGenerator {
 
     public List<List<InlineKeyboardButton>> getKeyboardFromUnappointedTasksList(List<UnappointedTask> unappointedTasks, int id, boolean isGroup) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        unappointedTasks.stream().forEach(unappointedTask -> {
-            keyboard.add(createSingleButtonRow(
-                    unappointedTask.getTask().getName(),
-                    "Show unappointed task " + unappointedTask.getId()));
-        });
+        unappointedTasks.forEach(unappointedTask -> keyboard.add(createSingleButtonRow(
+                unappointedTask.getTask().getName(),
+                "Show unappointed task " + unappointedTask.getId())));
         keyboard.add(createSingleButtonRow(
                 "Back",
                 (isGroup ? "Show group " : "Show main menu of ") + id));
@@ -42,11 +38,9 @@ public class KeyboardGenerator {
 
     public List<List<InlineKeyboardButton>> getKeyboardFromSubjectsList(List<Subject> subjects, int id, boolean isGroup) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        subjects.stream().forEach(subject -> {
-            keyboard.add(createSingleButtonRow(
-                    subject.getName(),
-                    "Show subject " + subject.getId()));
-        });
+        subjects.forEach(subject -> keyboard.add(createSingleButtonRow(
+                subject.getName(),
+                "Show subject " + subject.getId())));
         keyboard.add(createSingleButtonRow(
                 "Back",
                 (isGroup ? "Show group " : "Show main menu of ") + id));
@@ -86,9 +80,7 @@ public class KeyboardGenerator {
     public List<List<InlineKeyboardButton>> getAppointmentsForTodayKeyboard(TodayTasksInfo todayTasksInfo) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        todayTasksInfo.getAppointmentsForToday().stream().forEach(appointment -> {
-            keyboard.add(createSingleButtonRow(appointment.getTask().getName(), "Show appointment (noback) " + appointment.getId()));
-        });
+        todayTasksInfo.getAppointmentsForToday().forEach(appointment -> keyboard.add(createSingleButtonRow(appointment.getTask().getName(), "Show appointment (noback) " + appointment.getId())));
         keyboard.add(createSingleButtonRow("Back", "Show tasks for today " + todayTasksInfo.getId()));
 
         return keyboard;
@@ -97,9 +89,7 @@ public class KeyboardGenerator {
     public List<List<InlineKeyboardButton>> getAppointmentsWithDeadlineTodayKeyboard(TodayTasksInfo todayTasksInfo) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        todayTasksInfo.getAppointmentsWithDeadlineToday().stream().forEach(appointment -> {
-            keyboard.add(createSingleButtonRow(appointment.getTask().getName(), "Show appointment (noback) " + appointment.getId()));
-        });
+        todayTasksInfo.getAppointmentsWithDeadlineToday().forEach(appointment -> keyboard.add(createSingleButtonRow(appointment.getTask().getName(), "Show appointment (noback) " + appointment.getId())));
         keyboard.add(createSingleButtonRow("Back", "Show tasks for today " + todayTasksInfo.getId()));
 
         return keyboard;
@@ -108,9 +98,7 @@ public class KeyboardGenerator {
     public List<List<InlineKeyboardButton>> getOutdatedAppointmentsKeyboard(TodayTasksInfo todayTasksInfo) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        todayTasksInfo.getOutdatedAppointments().stream().forEach(appointment -> {
-            keyboard.add(createSingleButtonRow(appointment.getTask().getName(), "Show appointment (noback) " + appointment.getId()));
-        });
+        todayTasksInfo.getOutdatedAppointments().forEach(appointment -> keyboard.add(createSingleButtonRow(appointment.getTask().getName(), "Show appointment (noback) " + appointment.getId())));
         keyboard.add(createSingleButtonRow("Back", "Show tasks for today " + todayTasksInfo.getId()));
 
         return keyboard;
@@ -131,9 +119,7 @@ public class KeyboardGenerator {
     public List<List<InlineKeyboardButton>> getUnappointedTasksWithDeadlineTodayKeyboard(TodayTasksInfo todayTasksInfo) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        todayTasksInfo.getUnappointedTasksWithDeadlineToday().stream().forEach(unappointedTask -> {
-            keyboard.add(createSingleButtonRow(unappointedTask.getTask().getName(), "Show unappointed task (noback) " + unappointedTask.getId()));
-        });
+        todayTasksInfo.getUnappointedTasksWithDeadlineToday().forEach(unappointedTask -> keyboard.add(createSingleButtonRow(unappointedTask.getTask().getName(), "Show unappointed task (noback) " + unappointedTask.getId())));
         keyboard.add(createSingleButtonRow("Back", "Show tasks for today " + todayTasksInfo.getId()));
 
         return keyboard;
@@ -165,7 +151,7 @@ public class KeyboardGenerator {
         return keyboard;
     }
 
-    public List<List<InlineKeyboardButton>> getAppointmentKeyboard(Appointment appointment, boolean hasBackButton, boolean isGroupMode) {
+    public List<List<InlineKeyboardButton>> getAppointmentKeyboard(Appointment appointment, boolean hasBackButton) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         keyboard.add(createSingleButtonRow("Mark as done", "Mark appointment as done " + appointment.getId()));
@@ -217,9 +203,7 @@ public class KeyboardGenerator {
     public List<List<InlineKeyboardButton>> getOutdatedUnappointedTasksKeyboard(TodayTasksInfo todayTasksInfo) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        todayTasksInfo.getOutdatedUnappointedTasks().forEach(unappointedTask -> {
-            keyboard.add(createSingleButtonRow(unappointedTask.getTask().getName(), "Show appointment (noback) " + unappointedTask.getId()));
-        });
+        todayTasksInfo.getOutdatedUnappointedTasks().forEach(unappointedTask -> keyboard.add(createSingleButtonRow(unappointedTask.getTask().getName(), "Show unappointed task (noback) " + unappointedTask.getId())));
         keyboard.add(createSingleButtonRow("Back", "Show tasks for today " + todayTasksInfo.getId()));
 
         return keyboard;

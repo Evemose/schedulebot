@@ -5,7 +5,6 @@ import bot.schedulebot.entities.Announcement;
 import bot.schedulebot.entities.TodayTasksInfo;
 import bot.schedulebot.entities.UnappointedTask;
 import bot.schedulebot.entities.User;
-import bot.schedulebot.objectsunderconstruction.TasksUnderConstruction;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.GeneralMenuStorage;
 import bot.schedulebot.util.generators.KeyboardGenerator;
@@ -24,23 +23,19 @@ public class Notificator {
     private final KeyboardGenerator keyboardGenerator;
     private final BotConfig botConfig;
     private final UserRepository userRepository;
-    private final TasksUnderConstruction tasksUnderConstruction;
     private final ParseUtil parseUtil;
     private final GeneralMenuStorage generalMenuStorage;
 
-    private Notificator(KeyboardGenerator keyboardGenerator, UserRepository userRepository, TasksUnderConstruction tasksUnderConstruction, ParseUtil parseUtil, GeneralMenuStorage generalMenuStorage) {
+    private Notificator(KeyboardGenerator keyboardGenerator, UserRepository userRepository, ParseUtil parseUtil, GeneralMenuStorage generalMenuStorage) {
         this.keyboardGenerator = keyboardGenerator;
         this.botConfig = new BotConfig();
         this.userRepository = userRepository;
-        this.tasksUnderConstruction = tasksUnderConstruction;
         this.parseUtil = parseUtil;
         this.generalMenuStorage = generalMenuStorage;
     }
     public void sendNotificationsToGroupUsersAboutNewAnnouncement(List<User> users, Update update, Announcement announcement) {
-        users.stream().filter(user -> !user.getTag().equals(parseUtil.getTag(update)) && user.isWantToGenNotifications()).forEach(user -> {
-            if (user.isWantToGenNotifications())
-                sendNotificationToUserAboutNewAnnouncement(announcement.getId(), user.getChatId());
-        });
+        users.stream().filter(user -> !user.getTag().equals(parseUtil.getTag(update)) && user.isWantToGenNotifications()).forEach(user ->
+                sendNotificationToUserAboutNewAnnouncement(announcement.getId(), user.getChatId()));
     }
 
     public void sendPersonalNotificationAboutNewTask(User user, UnappointedTask unappointedTask) {

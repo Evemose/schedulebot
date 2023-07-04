@@ -68,33 +68,6 @@ public class SubjectService extends Service<Subject> {
             message.setText("Subject still has tasks related to it");
         }
     }
-
-    private List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Subject entity) {
-        new Thread(() -> {
-        try {
-            threadUtil.scheduleThreadKill(Thread.currentThread());
-            Exchanger<Update> exchanger = subjectAdditionHelper.getExchangers().get(parseUtil.getTag(update));
-
-            botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
-                    menuStorage.getMenu(MenuMode.SUBJECT_START, update));
-            entity.setName(exchanger.exchange(null).getMessage().getText());
-
-            subjectRepository.add(entity);
-            botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
-                    menuStorage.getMenu(MenuMode.SET_SUBJECT_NAME, update));
-
-            if (entity.getGroup() != null)
-            botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
-                    menuStorage.getMenu(MenuMode.GET_GROUP_SUBJECTS, update, entity.getGroup().getId()));
-            else {
-                botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
-                        menuStorage.getMenu(MenuMode.SHOW_SUBJECTS_OF_USER, update));
-            }
-        } catch (InterruptedException ignored){}
-        }, "Subject construction of " + parseUtil.getTag(update)).start();
-        return null;
-    }
-
     public void handleAdditionStart(Update update) {
         Subject subject = new Subject();
         subjectAdditionHelper.getExchangers().put(parseUtil.getTag(update), new Exchanger<>());

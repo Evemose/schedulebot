@@ -19,35 +19,19 @@ import java.util.concurrent.Exchanger;
 @Controller
 public class ServiceController {
     private final TaskService taskService;
-    private final GroupService groupService;
-    private final AppointmentService appointmentService;
     private final UserRepository userRepository;
     private final ParseUtil parseUtil;
     private final AnnouncementService announcementService;
     private final NotificationService notificationService;
-    private final SubjectsUnderConstruction subjectsUnderConstruction;
-    private final AnnouncementsUnderConstruction announcementsUnderConstruction;
-    private final TasksUnderConstruction tasksUnderConstruction;
-    private final NotificationsUnderConstruction notificationsUnderConstruction;
-    private final GroupsUnderConstruction groupsUnderConstruction;
-    private final AppointmentsUnderConstruction appointmentsUnderConstruction;
     private final Map<String, Map<String, Exchanger<Update>>> addExchangers;
     private final Map<String, Map<String, Exchanger<Update>>> editExchangers;
 
-    public ServiceController(TaskService taskAdditionHandler, GroupService groupAdditionHandler, AppointmentService appointmentAdditionHandler, UserRepository userRepository, ParseUtil parseUtil, AnnouncementService announcementService, NotificationService notificationService, SubjectsUnderConstruction subjectsUnderConstruction, AnnouncementsUnderConstruction announcementsUnderConstruction, TasksUnderConstruction tasksUnderConstruction, NotificationsUnderConstruction notificationsUnderConstruction, GroupsUnderConstruction groupsUnderConstruction, AppointmentsUnderConstruction appointmentsUnderConstruction) {
+    public ServiceController(TaskService taskAdditionHandler, UserRepository userRepository, ParseUtil parseUtil, AnnouncementService announcementService, NotificationService notificationService, AnnouncementsUnderConstruction announcementsUnderConstruction, TasksUnderConstruction tasksUnderConstruction, NotificationsUnderConstruction notificationsUnderConstruction, GroupsUnderConstruction groupsUnderConstruction, AppointmentsUnderConstruction appointmentsUnderConstruction) {
         this.taskService = taskAdditionHandler;
-        this.groupService = groupAdditionHandler;
-        this.appointmentService = appointmentAdditionHandler;
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
         this.announcementService = announcementService;
         this.notificationService = notificationService;
-        this.subjectsUnderConstruction = subjectsUnderConstruction;
-        this.announcementsUnderConstruction = announcementsUnderConstruction;
-        this.tasksUnderConstruction = tasksUnderConstruction;
-        this.notificationsUnderConstruction = notificationsUnderConstruction;
-        this.groupsUnderConstruction = groupsUnderConstruction;
-        this.appointmentsUnderConstruction = appointmentsUnderConstruction;
         this.addExchangers = Map.of("TASK", tasksUnderConstruction.getExchangers(),
                 "ANNOUNCEMENT", announcementsUnderConstruction.getExchangers(),
                 "NOTIFICATION", notificationsUnderConstruction.getExchangers(),

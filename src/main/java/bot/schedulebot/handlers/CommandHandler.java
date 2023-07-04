@@ -26,32 +26,16 @@ public class CommandHandler {
         String command = update.getMessage().getText();
         List<Message> resultMessagesSet = new ArrayList<>();
         switch (command) {
-            case "/start": {
+            case "/start" -> {
                 resultMessagesSet.add(tryRegisterUser(update.getMessage().getFrom(), update));
                 try {
                     resultMessagesSet.add(menuStorage.getMenu(MenuMode.MAIN_MENU, update, userRepository.get(update.getMessage().getFrom().getUserName()).getId()));
                 } catch (NullPointerException e) {
                     // in case of user is not registered
                 }
-                break;
             }
-//            case "/deleteme": {
-//                resultMessagesSet.add(commandHandler.tryDeleteUser(update.getMessage().getFrom()));
-//                break;
-//            }
-//            case "/resetme": {
-//                resultMessagesSet.add(commandHandler.tryResetUser(update.getMessage().getFrom()));
-//                break;
-//            }
-            case "/door": {
-                resultMessagesSet.add(menuStorage.getMenu(MenuMode.MAIN_MENU, update, userRepository.get(update.getMessage().getFrom().getUserName()).getId()));
-                break;
-            }
-            /*case "/pig": {
-                resultMessagesSet.add(menuStorage.getMenu(MenuMode.PIG, update));
-                break;
-            }*/
-            default: {
+            case "/door" -> resultMessagesSet.add(menuStorage.getMenu(MenuMode.MAIN_MENU, update, userRepository.get(update.getMessage().getFrom().getUserName()).getId()));
+            default -> {
                 Message message = new Message();
                 message.setText("Wrong command");
                 resultMessagesSet.add(message);
@@ -59,37 +43,6 @@ public class CommandHandler {
         }
         return resultMessagesSet;
     }
-
-    public Message tryDeleteUser(User user) {
-        Message message = new Message();
-        if (userRepository.get(user.getUserName()) != null) {
-
-            userRepository.delete(user.getUserName());
-
-            message.setText("Your account have been deleted!");
-        } else {
-            message.setText("You aren't registered!");
-        }
-        return message;
-    }
-
-    public Message tryResetUser(User user) {
-        Message message = new Message();
-        if (userRepository.get(user.getUserName()) != null) {
-
-            bot.schedulebot.entities.User resetedUser = new bot.schedulebot.entities.User();
-            resetedUser.setName(user.getFirstName() + (user.getLastName() == null ? "" : (" " + user.getLastName())));
-            resetedUser.setTag(user.getUserName());
-
-            userRepository.update(resetedUser);
-
-            message.setText("Your account has been reseted");
-        } else {
-            message.setText("You aren't registered!");
-        }
-        return message;
-    }
-
     public Message tryRegisterUser(User user, Update update) {
         Message message = new Message();
         bot.schedulebot.entities.User existingUser = userRepository.getByChatId(update.getMessage().getChatId().toString());

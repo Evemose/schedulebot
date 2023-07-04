@@ -76,7 +76,7 @@ public class AppointmentMenuStorage {
         u.setGroupMode(appointment.getGroup() != null);
         userRepository.update(u);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        markup.setKeyboard(keyboardGenerator.getAppointmentKeyboard(appointment, hasBackButton, isGroupMode));
+        markup.setKeyboard(keyboardGenerator.getAppointmentKeyboard(appointment, hasBackButton));
 
         if (appointment.getTask().getFile() != null) {
             File file = fileGenerator.getFileFromByteArray(appointment.getTask().getFile().getFile(),
@@ -98,25 +98,25 @@ public class AppointmentMenuStorage {
             File file = converter.convertJsonStringToFile(appointment.getTask().getImage());
             botConfig.sendPhoto(parseUtil.getChatId(update),
                     new InputFile(file),
-                    textGenerator.getAppointmentMenuText(appointment),
+                    appointment.toString(),
                     markup);
             file.delete();
         } else {
             session.close();
-            return getAppointmentMenuWithoutAttachments(appointmentId, hasBackButton, isGroupMode);
+            return getAppointmentMenuWithoutAttachments(appointmentId, hasBackButton);
         }
         session.close();
         return null;
     }
 
-    public Message getAppointmentMenuWithoutAttachments(int appointmentId, boolean hasBackButton, boolean isGroupMode) {
+    public Message getAppointmentMenuWithoutAttachments(int appointmentId, boolean hasBackButton) {
         Session session = HibernateConfig.getSession();
         Message message = new Message();
         Appointment appointment = appointmentRepository.get(appointmentId, session);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        markup.setKeyboard(keyboardGenerator.getAppointmentKeyboard(appointment, hasBackButton, isGroupMode));
+        markup.setKeyboard(keyboardGenerator.getAppointmentKeyboard(appointment, hasBackButton));
         message.setReplyMarkup(markup);
-        message.setText(textGenerator.getAppointmentMenuText(appointment));
+        message.setText(appointment.toString());
         session.close();
         return message;
     }

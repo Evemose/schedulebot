@@ -14,7 +14,7 @@ public class TasksUnderConstruction extends ObjectsUnderConstruction<Task> {
     private final Map<String, TaskType> taskTypes;
     private final Map<String, String> taskTargets;
 
-    public TasksUnderConstruction() {
+    private TasksUnderConstruction() {
         taskTypes = new HashMap<>();
         taskTargets = new HashMap<>();
         messageIds = new HashMap<>();

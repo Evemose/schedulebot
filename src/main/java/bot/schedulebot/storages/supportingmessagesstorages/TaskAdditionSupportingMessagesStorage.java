@@ -4,22 +4,18 @@ import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.storages.menustorages.GroupMenuStorage;
 import bot.schedulebot.storages.menustorages.SubjectMenuStorage;
 import bot.schedulebot.util.ParseUtil;
-import bot.schedulebot.util.generators.KeyboardGenerator;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 public class TaskAdditionSupportingMessagesStorage implements AdditionSupportingMessagesStorage {
-    private final KeyboardGenerator keyboardGenerator;
     private final GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage;
     private final GroupMenuStorage groupMenuStorage;
     private final ParseUtil parseUtil;
     private final SubjectMenuStorage subjectMenuStorage;
 
-    private TaskAdditionSupportingMessagesStorage(KeyboardGenerator keyboardGenerator, GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage, GroupMenuStorage groupMenuStorage, ParseUtil parseUtil, SubjectMenuStorage subjectMenuStorage) {
-
-        this.keyboardGenerator = keyboardGenerator;
+    private TaskAdditionSupportingMessagesStorage(GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage, GroupMenuStorage groupMenuStorage, ParseUtil parseUtil, SubjectMenuStorage subjectMenuStorage) {
         this.generalAdditionSupportingMessagesStorage = generalAdditionSupportingMessagesStorage;
         this.groupMenuStorage = groupMenuStorage;
         this.parseUtil = parseUtil;
@@ -30,27 +26,13 @@ public class TaskAdditionSupportingMessagesStorage implements AdditionSupporting
     public Message getMessageByAdditionStage(InstanceAdditionStage instanceAdditionStage, Update update) {
         Message message = new Message();
         switch (instanceAdditionStage) {
-            case TASK_START -> {
-                message = getStartOfAdditionMessage();
-            }
-            case TASK_IMAGE, TASK_NAME_NO_IMAGE -> {
-                message = getImageStageOfAdditionMessage();
-            }
-            case TASK_FILE, TASK_IMAGE_NO_FILE -> {
-                message = getFileStageOfAdditionMessage();
-            }
-            case TASK_NAME -> {
-                message = getNameStageOfAdditionMessage();
-            }
-            case TASK_DESCRIPTION -> {
-                message = getDescriptionStageOfAdditionMessage(update);
-            }
-            case TASK_SUBJECT -> {
-                message = getSubjectStageOfAdditionMessage();
-            }
-            case TASK_DEADLINE -> {
-                message = getDeadlineStageOfAdditionMessage();
-            }
+            case TASK_START -> message = getStartOfAdditionMessage();
+            case TASK_IMAGE, TASK_NAME_NO_IMAGE -> message = getImageStageOfAdditionMessage();
+            case TASK_FILE, TASK_IMAGE_NO_FILE -> message = getFileStageOfAdditionMessage();
+            case TASK_NAME -> message = getNameStageOfAdditionMessage();
+            case TASK_DESCRIPTION -> message = getDescriptionStageOfAdditionMessage(update);
+            case TASK_SUBJECT -> message = getSubjectStageOfAdditionMessage();
+            case TASK_DEADLINE -> message = getDeadlineStageOfAdditionMessage();
         }
         return message;
     }

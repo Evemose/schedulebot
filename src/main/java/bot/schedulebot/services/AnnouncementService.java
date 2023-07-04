@@ -9,12 +9,10 @@ import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.objectsunderconstruction.AnnouncementsUnderConstruction;
 import bot.schedulebot.repositories.AnnouncementRepository;
-import bot.schedulebot.repositories.FileRepository;
 import bot.schedulebot.repositories.GroupRepository;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.MenuStorage;
 import bot.schedulebot.util.*;
-import bot.schedulebot.util.generators.TextGenerator;
 import org.hibernate.Session;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -24,36 +22,24 @@ import java.util.List;
 
 @org.springframework.stereotype.Service
 public class AnnouncementService extends Service<Announcement> {
-
-    private final AnnouncementsUnderConstruction announcementsUnderConstruction;
     private final UserRepository userRepository;
     private final ParseUtil parseUtil;
     private final GroupRepository groupRepository;
     private final MenuStorage menuStorage;
-    private final Converter converter;
     private final AnnouncementRepository announcementRepository;
     private final Notificator notificator;
-    private final FileRepository fileRepository;
     private final BotConfig botConfig;
-    private final TextGenerator textGenerator;
 
-    protected AnnouncementService(ClassFieldsStorage classFieldsStorage, AnnouncementsUnderConstruction announcementsUnderConstruction, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, MenuStorage menuStorage, Converter converter, AnnouncementRepository announcementRepository, Notificator notificator, FileRepository fileRepository, ThreadUtil threadUtil, TextGenerator textGenerator) {
+    protected AnnouncementService(ClassFieldsStorage classFieldsStorage, AnnouncementsUnderConstruction announcementsUnderConstruction, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, MenuStorage menuStorage, Converter converter, AnnouncementRepository announcementRepository, Notificator notificator, ThreadUtil threadUtil) {
         super(announcementRepository, threadUtil, parseUtil, announcementsUnderConstruction, menuStorage, converter, classFieldsStorage, null, userRepository);
-        this.announcementsUnderConstruction = announcementsUnderConstruction;
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
         this.groupRepository = groupRepository;
         this.menuStorage = menuStorage;
-        this.converter = converter;
         this.announcementRepository = announcementRepository;
         this.notificator = notificator;
-        this.fileRepository = fileRepository;
         this.botConfig = new BotConfig();
-        this.textGenerator = textGenerator;
     }
-
-    private List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Announcement entity) { return null; }
-
 
     @Override
     protected void persistEntity(Update update, Announcement announcement) {
@@ -122,10 +108,7 @@ public class AnnouncementService extends Service<Announcement> {
         }
     }
 
-    @Override
-    public void handleAdditionStart(Update update) {
 
-    }
 
 
 }

@@ -33,4 +33,9 @@ public class Announcement implements Serializable, Entity {
             inverseJoinColumns = @JoinColumn(name = "group_id"),
             joinColumns = @JoinColumn(name = "announcements_id"))
     private Group group;
+
+    public String toString() {
+        return "*Title:* " + title
+               + "\n\n*Announcement:* " + text;
+    }
 }

@@ -12,10 +12,9 @@ public class TodayTasksInfoRepository extends Repository<TodayTasksInfo> {
     protected TodayTasksInfoRepository() {}
 
     public TodayTasksInfo get(String tag, Session session) {
-        Query<TodayTasksInfo> query = session.createQuery("select t from TodayTasksInfo t where t.user.tag = :tag");
+        Query<TodayTasksInfo> query = session.createQuery("select t from TodayTasksInfo t where t.user.tag = :tag", TodayTasksInfo.class);
         query.setParameter("tag", tag);
-        TodayTasksInfo todayTasksInfo = query.uniqueResult();
-        return todayTasksInfo;
+        return query.uniqueResult();
     }
 
     @Override
@@ -24,7 +23,6 @@ public class TodayTasksInfoRepository extends Repository<TodayTasksInfo> {
             add(todayTasksInfo, session);
         }
         else {
-            //todayTasksInfo.getUnappointedTasksWithDeadlineToday().get(0).getTask().getGroup().getUserRoles();
             Transaction transaction = session.beginTransaction();
             session.update(todayTasksInfo);
             session.flush();

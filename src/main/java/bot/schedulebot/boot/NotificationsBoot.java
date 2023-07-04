@@ -43,7 +43,7 @@ public class NotificationsBoot {
                 Session session = HibernateConfig.getSession();
                 List<User> users = userRepository.getAll(session);
                 todayTasksInfoService.deleteAllTasksInfoMessages();
-                users.stream().filter(user -> user.isWantToGenNotifications()).forEach(user -> {
+                users.stream().filter(User::isWantToGenNotifications).forEach(user -> {
                     TodayTasksInfo todayTasksInfo;
                     if (user.getTodayTasksInfo() == null) {
                         todayTasksInfo = new TodayTasksInfo();

@@ -3,7 +3,6 @@ package bot.schedulebot.storages.menustorages;
 import bot.schedulebot.config.HibernateConfig;
 import bot.schedulebot.entities.Subject;
 import bot.schedulebot.entities.User;
-import bot.schedulebot.objectsunderconstruction.TasksUnderConstruction;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.util.ParseUtil;
 import bot.schedulebot.util.generators.KeyboardGenerator;
@@ -23,14 +22,12 @@ public class SubjectMenuStorage {
     private final UserRepository userRepository;
     private final KeyboardGenerator keyboardGenerator;
     private final TextGenerator textGenerator;
-    private final TasksUnderConstruction tasksUnderConstruction;
     private final ParseUtil parseUtil;
 
-    public SubjectMenuStorage(UserRepository userRepository, KeyboardGenerator keyboardGenerator, TextGenerator textGenerator, TasksUnderConstruction tasksUnderConstruction, ParseUtil parseUtil) {
+    public SubjectMenuStorage(UserRepository userRepository, KeyboardGenerator keyboardGenerator, TextGenerator textGenerator, ParseUtil parseUtil) {
         this.userRepository = userRepository;
         this.keyboardGenerator = keyboardGenerator;
         this.textGenerator = textGenerator;
-        this.tasksUnderConstruction = tasksUnderConstruction;
         this.parseUtil = parseUtil;
     }
 
@@ -41,9 +38,7 @@ public class SubjectMenuStorage {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        user.getSubjects().stream().forEach(subject -> {
-            keyboard.add(keyboardGenerator.createSingleButtonRow(subject.getName(), callBackBase + " " + subject.getId()));
-        });
+        user.getSubjects().forEach(subject -> keyboard.add(keyboardGenerator.createSingleButtonRow(subject.getName(), callBackBase + " " + subject.getId())));
         keyboard.add(keyboardGenerator.createSingleButtonRow("Back", "Show subjects of " + user.getId()));
 
         markup.setKeyboard(keyboard);

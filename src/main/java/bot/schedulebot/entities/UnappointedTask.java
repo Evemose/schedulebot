@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.time.format.DateTimeFormatter;
 
 @Getter
 @Setter
@@ -50,5 +51,9 @@ public class UnappointedTask implements Entity, Serializable {
     public UnappointedTask(Task task) {
         this.task = task;
         this.group = task.getGroup();
+    }
+
+    public String toString() {
+        return task.toString();
     }
 }

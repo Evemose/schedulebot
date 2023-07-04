@@ -14,7 +14,7 @@ public abstract class ObjectsUnderConstruction<T> {
     protected Map<String, Exchanger<Update>> exchangers;
     protected Map<String, Exchanger<Update>> editExchangers;
     protected Map<String, Integer> messageIds;
-    public ObjectsUnderConstruction() {
+    protected ObjectsUnderConstruction() {
         this.objectsUnderConstructions = new HashMap<>();
         this.exchangers = new HashMap<>();
         this.editExchangers = new HashMap<>();

@@ -11,6 +11,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class NotificationsUnderConstruction extends ObjectsUnderConstruction<Notification> {
 
-    public NotificationsUnderConstruction() {
+    private NotificationsUnderConstruction() {
     }
 }

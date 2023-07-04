@@ -34,7 +34,7 @@ public class GeneralMenuStorage {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
 
         todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
-        message.setText(textGenerator.getMessageTextFromTodayTasksInfo(todayTasksInfo));
+        message.setText("For today you have:\n\n" + todayTasksInfo);
         markup.setKeyboard(keyboardGenerator.getEverydayTaskNotificationKeyboard(todayTasksInfo));
         message.setReplyMarkup(markup);
 
@@ -46,15 +46,6 @@ public class GeneralMenuStorage {
         message.setText("I cant get what you are saying");
         return message;
     }
-
-//    public Message getManual(int userId) {
-//        Message message = new Message();
-//        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-//        keyboard.add(keyboardGenerator.createSingleButtonRow("Back", "Show main menu " + userId));
-//        message.setReplyMarkup(new InlineKeyboardMarkup(keyboard));
-//        message.setText(textGenerator.getManualText());
-//        return message;
-//    }
 
     public Message getMainMenu(int targetId) {
         User user = userRepository.get(targetId);

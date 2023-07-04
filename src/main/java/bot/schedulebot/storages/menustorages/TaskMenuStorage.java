@@ -92,12 +92,12 @@ public class TaskMenuStorage {
             File file = converter.convertJsonStringToFile(task.getImage());
             botConfig.sendPhoto(parseUtil.getChatId(update),
                     new InputFile(file),
-                    textGenerator.getTaskMenuText(task.getId()),
+                    task.toString(),
                     markup);
             file.delete();
             return null;
         } else {
-            message.setText(textGenerator.getTaskMenuText(task.getId()));
+            message.setText(task.toString());
         }
         return message;
     }

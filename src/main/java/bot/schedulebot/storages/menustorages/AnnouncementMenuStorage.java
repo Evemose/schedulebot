@@ -22,7 +22,6 @@ import java.util.List;
 
 @Component
 public class AnnouncementMenuStorage {
-
     private final Converter converter;
     private final AnnouncementRepository announcementRepository;
     private final KeyboardGenerator keyboardGenerator;
@@ -64,6 +63,13 @@ public class AnnouncementMenuStorage {
         markup.setKeyboard(keyboard);
         message.setReplyMarkup(markup);
 
+        message = getAnnouncementMessage(update, message, announcement, markup);
+
+        session.close();
+        return message;
+    }
+
+    private Message getAnnouncementMessage(Update update, Message message, Announcement announcement, InlineKeyboardMarkup markup) {
         if (announcement.getFile() != null) {
             File file = fileGenerator.getFileFromByteArray(announcement.getFile().getFile(),
                     announcement.getTitle() + announcement.getFile().getFileType());
@@ -77,26 +83,15 @@ public class AnnouncementMenuStorage {
             File file = converter.convertJsonStringToFile(announcement.getImage());
             botConfig.sendPhoto(parseUtil.getChatId(update),
                     new InputFile(file),
-                    getAnnouncementMenuText(announcementId),
+                    announcement.toString(),
                     markup);
             message = null;
             file.delete();
         } else {
             message.setReplyMarkup(markup);
-            message.setText(getAnnouncementMenuText(announcementId));
+            message.setText(announcement.toString());
         }
-
-        session.close();
         return message;
-    }
-
-    private String getAnnouncementMenuText(int announcementId) {
-        Session session = HibernateConfig.getSession();
-        Announcement announcement = announcementRepository.get(announcementId, session);
-        String res = "*Title:* " + announcement.getTitle() +
-                "\n\n*Announcement:* " + announcement.getText();
-        session.close();
-        return res;
     }
 
     public Message getAnnouncementEditMenu(int announcementId, Update update) {
@@ -113,27 +108,7 @@ public class AnnouncementMenuStorage {
         keyboard.add(keyboardGenerator.createSingleButtonRow("Back", "Show announcement (manage) " + announcementId));
         markup.setKeyboard(keyboard);
 
-        if (announcement.getFile() != null) {
-            File file = fileGenerator.getFileFromByteArray(announcement.getFile().getFile(),
-                    announcement.getTitle() + announcement.getFile().getFileType());
-            botConfig.sendDocument(parseUtil.getChatId(update),
-                    new InputFile(file),
-                    "*Attachment*");
-            file.delete();
-        }
-
-        if (announcement.getImage() != null) {
-            File file = converter.convertJsonStringToFile(announcement.getImage());
-            botConfig.sendPhoto(parseUtil.getChatId(update),
-                    new InputFile(file),
-                    getAnnouncementMenuText(announcementId),
-                    markup);
-            message = null;
-            file.delete();
-        } else {
-            message.setReplyMarkup(markup);
-            message.setText(getAnnouncementMenuText(announcementId));
-        }
+        message = getAnnouncementMessage(update, message, announcement, markup);
 
         session.close();
         return message;

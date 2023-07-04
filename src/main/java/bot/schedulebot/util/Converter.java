@@ -46,8 +46,7 @@ public class Converter {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        File file = tempFile.toFile();
-        return file;
+        return tempFile.toFile();
     }
 
 

@@ -5,7 +5,6 @@ import bot.schedulebot.config.HibernateConfig;
 import bot.schedulebot.entities.*;
 import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
-import bot.schedulebot.objectsunderconstruction.AppointmentsUnderConstruction;
 import bot.schedulebot.objectsunderconstruction.TasksUnderConstruction;
 import bot.schedulebot.repositories.*;
 import bot.schedulebot.storages.menustorages.MenuStorage;
@@ -26,45 +25,33 @@ public class TaskService extends Service<Task> {
     private final UserRepository userRepository;
     private final ParseUtil parseUtil;
     private final GroupRepository groupRepository;
-    private final TasksUnderConstruction taskAdditionHelper;
-    private final SubjectRepository subjectRepository;
     private final UnappointedTaskRepository unappointedTaskRepository;
     private final MenuStorage menuStorage;
     private final TaskRepository taskRepository;
     private final AppointmentRepository appointmentRepository;
-    private final Converter converter;
-    private final FileRepository fileRepository;
-    private final AppointmentsUnderConstruction appointmentsUnderConstruction;
     private final Notificator notificator;
     private final TodayTasksInfoService todayTasksInfoService;
     private final TodayTasksInfoRepository todayTasksInfoRepository;
     private final TextGenerator textGenerator;
     private final KeyboardGenerator keyboardGenerator;
     private final BotConfig botConfig;
-    private final TasksUnderConstruction tasksUnderConstruction;
     private final AppointmentService appointmentService;
 
-    protected TaskService(ClassFieldsStorage classFieldsStorage, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, TasksUnderConstruction taskAdditionHelper, SubjectRepository subjectRepository, UnappointedTaskRepository unappointedTaskRepository, MenuStorage menuStorage, TaskRepository taskRepository, AppointmentRepository appointmentRepository, Converter converter, FileRepository fileRepository, AppointmentsUnderConstruction appointmentsUnderConstruction, Notificator notificator, TodayTasksInfoService todayTasksInfoService, TodayTasksInfoRepository todayTasksInfoRepository, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, TasksUnderConstruction tasksUnderConstruction, ThreadUtil threadUtil, AppointmentService appointmentService) {
+    protected TaskService(ClassFieldsStorage classFieldsStorage, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, SubjectRepository subjectRepository, UnappointedTaskRepository unappointedTaskRepository, MenuStorage menuStorage, TaskRepository taskRepository, AppointmentRepository appointmentRepository, Converter converter, Notificator notificator, TodayTasksInfoService todayTasksInfoService, TodayTasksInfoRepository todayTasksInfoRepository, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, TasksUnderConstruction tasksUnderConstruction, ThreadUtil threadUtil, AppointmentService appointmentService) {
         super(taskRepository, threadUtil, parseUtil, tasksUnderConstruction, menuStorage, converter, classFieldsStorage, subjectRepository, userRepository);
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
         this.groupRepository = groupRepository;
-        this.taskAdditionHelper = taskAdditionHelper;
-        this.subjectRepository = subjectRepository;
         this.unappointedTaskRepository = unappointedTaskRepository;
         this.menuStorage = menuStorage;
         this.taskRepository = taskRepository;
         this.appointmentRepository = appointmentRepository;
-        this.converter = converter;
-        this.fileRepository = fileRepository;
-        this.appointmentsUnderConstruction = appointmentsUnderConstruction;
         this.notificator = notificator;
         this.todayTasksInfoService = todayTasksInfoService;
         this.todayTasksInfoRepository = todayTasksInfoRepository;
         this.textGenerator = textGenerator;
         this.keyboardGenerator = keyboardGenerator;
         this.botConfig = new BotConfig();
-        this.tasksUnderConstruction = tasksUnderConstruction;
         this.appointmentService = appointmentService;
     }
 
@@ -81,7 +68,7 @@ public class TaskService extends Service<Task> {
         } else {
             message.setText("Task still has not been completed by some users. Do you want to force delete it (it will delete all associated appointments)?" +
                     "\n\nUsers that still have not completed task:\n\n" +
-                    textGenerator.getStringOfUsersWithTask(taskId));
+                    textGenerator.getUsersWithTask(taskId));
             message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getForceDeleteTaskKeyboard(task)));
         }
         botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());

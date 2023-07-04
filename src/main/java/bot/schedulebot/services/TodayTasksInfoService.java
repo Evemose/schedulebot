@@ -76,7 +76,7 @@ public class TodayTasksInfoService {
 
     public void deleteAllTasksInfoMessages() {
         Session session = HibernateConfig.getSession();
-        todayTasksInfoRepository.getAll(session).stream().forEach(todayTasksInfo -> {
+        todayTasksInfoRepository.getAll(session).forEach(todayTasksInfo -> {
             if (todayTasksInfo.getUser() != null)
                 botConfig.deleteMessage(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId());
         });
@@ -99,31 +99,19 @@ public class TodayTasksInfoService {
             switch (todayTasksInfo.getMode()) {
                 case MAIN -> {
                     Message message = new Message();
-                    message.setText(textGenerator.getMessageTextFromTodayTasksInfo(todayTasksInfo));
+                    message.setText("For today you have:\n\n" + todayTasksInfo);
                     message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getEverydayTaskNotificationKeyboard(todayTasksInfo)));
                     botConfig.editMessage(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId(), message);
                 }
-                case APPOINTMENTS_FOR_TODAY -> {
-                    appointmentMenuStorage.getAppointmentsForTodayMenu(todayTasksInfo.getId());
-                }
-                case APPOINTMENTS_WITH_DEADLINE_TODAY -> {
-                    appointmentMenuStorage.getAppointmentsWithDeadlineTodayMenu(todayTasksInfo.getId());
-                }
-                case UNAPPOINTED_TASKS_WITH_DEADLINE_TODAY -> {
-                    unappointedTaskMenuStorage.getUnappointedTasksWithDeadlineTodayMenu(todayTasksInfo.getId());
-                }
-                case OUTDATED_APPOINTMENTS -> {
-                    appointmentMenuStorage.getOutdatedAppointmentsMenu(todayTasksInfo.getId());
-                }
-                case OUTDATED_UNAPPOINTED_TASKS -> {
-                    unappointedTaskMenuStorage.getOutdatedUnappointedTasksMenu(todayTasksInfo.getId());
-                }
-                default -> {
-                    throw new RuntimeException("Wrong today tasks mode");
-                }
+                case APPOINTMENTS_FOR_TODAY -> appointmentMenuStorage.getAppointmentsForTodayMenu(todayTasksInfo.getId());
+                case APPOINTMENTS_WITH_DEADLINE_TODAY -> appointmentMenuStorage.getAppointmentsWithDeadlineTodayMenu(todayTasksInfo.getId());
+                case UNAPPOINTED_TASKS_WITH_DEADLINE_TODAY -> unappointedTaskMenuStorage.getUnappointedTasksWithDeadlineTodayMenu(todayTasksInfo.getId());
+                case OUTDATED_APPOINTMENTS -> appointmentMenuStorage.getOutdatedAppointmentsMenu(todayTasksInfo.getId());
+                case OUTDATED_UNAPPOINTED_TASKS -> unappointedTaskMenuStorage.getOutdatedUnappointedTasksMenu(todayTasksInfo.getId());
+                default -> throw new RuntimeException("Wrong today tasks mode");
             }
             botConfig.pinMessage(todayTasksInfo.getUser().getChatId(), todayTasksInfo.getMessageId());
-        } catch (RuntimeException e) { // message hasn`t been edited
+        } catch (RuntimeException e) { // message hasn't been edited
 
         }
     }

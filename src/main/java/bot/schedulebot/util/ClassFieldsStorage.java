@@ -39,11 +39,6 @@ public class ClassFieldsStorage {
                     entitiesToAddPropertiesNotCollections.put(clazz, fields);
                     });
         entitiesToAddPropertiesNotCollections.forEach((aClass, fields) -> {
-//            System.out.print(aClass.getSimpleName() + ": ");
-//            for (Field field : fields) {
-//                System.out.print(field.getName() + " ");
-//            }
-//            System.out.println();
         });
     }
 

@@ -12,15 +12,12 @@ import bot.schedulebot.repositories.*;
 import bot.schedulebot.storages.menustorages.MenuStorage;
 import bot.schedulebot.util.*;
 import org.hibernate.Session;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service
 public class GroupService extends Service<Group> {
@@ -28,7 +25,6 @@ public class GroupService extends Service<Group> {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final MenuStorage menuStorage;
-    private final GroupsUnderConstruction groupAdditionHelper;
     private final ParseUtil parseUtil;
     private final TaskService taskService;
     private final SubjectRepository subjectRepository;
@@ -42,7 +38,6 @@ public class GroupService extends Service<Group> {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.menuStorage = menuStorage;
-        this.groupAdditionHelper = groupAdditionHelper;
         this.parseUtil = parseUtil;
         this.taskService = taskService;
         this.subjectRepository = subjectRepository;
@@ -51,71 +46,6 @@ public class GroupService extends Service<Group> {
         this.notificationRepository = notificationRepository;
         botConfig = new BotConfig();
     }
-
-    private List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Group entity) {
-        List<Message> messages = new ArrayList<>();
-        Session session = HibernateConfig.getSession();
-        User user = userRepository.get(parseUtil.getTag(update), session);
-        switch (instanceAdditionStage) {
-            case GROUP_START -> {
-                handleGroupAdditionStart(user, session);
-                messages.add(menuStorage.getMenu(MenuMode.GROUP_START, update));
-            }
-            case GROUP_NAME -> {
-                handleGroupNameSet(update, user, session);
-                messages.add(menuStorage.getMenu(MenuMode.SET_GROUP_NAME, update));
-                messages.add(menuStorage.getMenu(MenuMode.GROUP_MANAGE_MENU, update, user.getGroups().get(user.getGroups().size() - 1).getId()));
-            }
-            default -> throw new RuntimeException("Group subject addition stage");
-        }
-        session.close();
-        return messages;
-    }
-
-    public void handleGroupJoin(Update update) {
-        Session session = HibernateConfig.getSession();
-        Message message;
-        if (tryAddUser(userRepository.get(parseUtil.getTag(update)).getId(), update.getMessage().getText())) {
-            Group group = groupRepository.getAll(session).stream().filter(group1 -> group1.getCode().equals(update.getMessage().getText())).collect(Collectors.toList()).get(0);
-            message = menuStorage.getMenu(MenuMode.GROUP_MANAGE_MENU, update, group.getId());
-        } else {
-            message = new Message();
-            if (groupRepository.get(update.getMessage().getText(), session) == null) {
-                message.setText("Wrong code. Try again");
-            } else {
-                message.setText("You are trying to join group you are already in");
-            }
-            message.setReplyMarkup(menuStorage.getMenu(MenuMode.JOIN_GROUP, update).getReplyMarkup());
-        }
-        botConfig.sendMessage(update.getMessage().getChatId().toString(), message);
-        session.close();
-        User user = userRepository.get(parseUtil.getTag(update));
-        user.setInstanceAdditionStage(InstanceAdditionStage.NONE);
-        userRepository.update(user);
-    }
-
-    private void handleGroupAdditionStart(User user, Session session) {
-        Group group = new Group();
-
-        user.setInstanceAdditionStage(InstanceAdditionStage.GROUP_NAME);
-        group.setUserRoles(new HashMap<>());
-        group.getUserRoles().put(user, Role.OWNER);
-        group.setUsers(new ArrayList<>());
-        group.getUsers().add(user);
-        groupAdditionHelper.getObjectsUnderConstructions().put(user.getTag(), group);
-        userRepository.update(user, session);
-
-    }
-
-    private void handleGroupNameSet(Update update, User user, Session session) {
-        Group group = groupAdditionHelper.getObjectsUnderConstructions().get(user.getTag());
-        group.setName(update.getMessage().getText());
-
-        user.setInstanceAdditionStage(InstanceAdditionStage.NONE);
-        groupRepository.add(group);
-        userRepository.update(user, session);
-    }
-
     private void transferOwnership(int groupId, int newOwnerId, int oldOwnerId) {
         groupRepository.updateUserRole(newOwnerId, Role.OWNER, groupId);
         groupRepository.updateUserRole(oldOwnerId, Role.ADMIN, groupId);
@@ -144,23 +74,6 @@ public class GroupService extends Service<Group> {
 
     private void addAdmin(int groupId, int userId) {
         groupRepository.updateUserRole(userId, Role.ADMIN, groupId);
-    }
-
-    private boolean tryAddUser(int userId, String code) {
-        Session session = HibernateConfig.getSession();
-        Group group = groupRepository.get(code, session);
-        if (group != null) {
-            try {
-                userRepository.addUserToGroup(userId, group.getId());
-            } catch (DataIntegrityViolationException e) {
-                return false;
-            }
-            session.close();
-            return true;
-        } else {
-            session.close();
-            return false;
-        }
     }
 
     public void handleGroupLeave(Update update, List<Message> resultMessagesList, String callbackData, User u) {
@@ -234,21 +147,11 @@ public class GroupService extends Service<Group> {
         Group group = groupRepository.get(id, session);
         group.setImportantInfo(new ArrayList<>());
         groupRepository.update(group, session);
-        group.getTasks().forEach(task -> {
-            taskService.forceDeleteTask(task.getId());
-        });
-        group.getSubjects().forEach(subject -> {
-            subjectRepository.delete(subject.getId());
-        });
-        group.getAnnouncements().forEach(announcement -> {
-            announcementRepository.delete(announcement.getId());
-        });
-        group.getImportantInfo().forEach(announcement -> {
-            announcementRepository.delete(announcement.getId());
-        });
-        group.getUsers().forEach(user -> {
-            kickUser(group.getId(), user.getId());
-        });
+        group.getTasks().forEach(task -> taskService.forceDeleteTask(task.getId()));
+        group.getSubjects().forEach(subject -> subjectRepository.delete(subject.getId()));
+        group.getAnnouncements().forEach(announcement -> announcementRepository.delete(announcement.getId()));
+        group.getImportantInfo().forEach(announcement -> announcementRepository.delete(announcement.getId()));
+        group.getUsers().forEach(user -> kickUser(group.getId(), user.getId()));
         group.getRepeatedNotifications().forEach(notification -> {
             timersStorage.getRepeatedNotificationTimers().get(notification.getId()).cancel();
             notificationRepository.delete(notification.getId());

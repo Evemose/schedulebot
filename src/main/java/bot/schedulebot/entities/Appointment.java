@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Getter
 @Setter
@@ -46,5 +47,10 @@ public class Appointment implements Serializable, Entity {
         this.task = unappointedTask.getTask();
         this.group = unappointedTask.getTask().getGroup();
         this.user = unappointedTask.getUser();
+    }
+
+    public String toString() {
+        return task.toString() +
+                "\n\n*Appointed on:* " + date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
     }
 }

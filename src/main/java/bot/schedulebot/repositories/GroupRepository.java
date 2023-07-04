@@ -22,10 +22,9 @@ public class GroupRepository extends bot.schedulebot.repositories.Repository<Gro
     }
 
     public Group get(String code, Session session) {
-        Query<Group> query = session.createQuery("select g from Group g where code = :code");
+        Query<Group> query = session.createQuery("select g from Group g where code = :code", Group.class);
         query.setParameter("code", code);
-        Group group = query.uniqueResult();
-        return group;
+        return query.uniqueResult();
     }
 
     @Override
@@ -44,7 +43,7 @@ public class GroupRepository extends bot.schedulebot.repositories.Repository<Gro
     public void updateUserRole(int userId, Role role, int groupId) {
         Session session = getSession();
         Transaction transaction = session.beginTransaction();
-        NativeQuery query = session.createNativeQuery("update groups_user_roles set userroles = :role where users_id = :userId and group_id = :groupId");
+        NativeQuery<?> query = session.createNativeQuery("update groups_user_roles set userroles = :role where users_id = :userId and group_id = :groupId", Object.class);
         query.setParameter("role", role.toString());
         query.setParameter("userId", userId);
         query.setParameter("groupId", groupId);

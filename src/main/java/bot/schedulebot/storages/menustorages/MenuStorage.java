@@ -154,157 +154,153 @@ public class MenuStorage {
             case UNHANDLED_MESSAGE -> {
                 return generalMenuStorage.getUnhandledMessageReply();
             }
-            default -> {
-                throw new RuntimeException("Wrong menu option passed");
-            }
+            default -> throw new RuntimeException("Wrong menu option passed");
         }
     }
 
     public Message getMenu(MenuMode menuMode, Update update, int targetId) {
         switch (menuMode) {
-            case MAIN_MENU: {
+            case MAIN_MENU -> {
                 return generalMenuStorage.getMainMenu(targetId);
             }
-            case USER_APPOINTMENTS_LIST: {
+            case USER_APPOINTMENTS_LIST -> {
                 return appointmentMenuStorage.getAppointmentsMenu(targetId);
             }
-            case UNAPPOINTED_TASKS_MENU: {
+            case UNAPPOINTED_TASKS_MENU -> {
                 return unappointedTaskMenuStorage.getUnappointedTasksMenu(parseUtil.getTag(update));
             }
-            case GROUPS_MENU: {
+            case GROUPS_MENU -> {
                 return groupMenuStorage.getGroupsMenu(targetId);
             }
-            case GROUP_MANAGE_MENU: {
+            case GROUP_MANAGE_MENU -> {
                 return groupMenuStorage.getGroupMenu(targetId, update);
             }
-            case GROUP_USERS_LIST: {
+            case GROUP_USERS_LIST -> {
                 return groupMenuStorage.getUsersInGroupList(targetId, update);
             }
-            case GROUP_APPOINTMENTS_MENU: {
+            case GROUP_APPOINTMENTS_MENU -> {
                 return groupMenuStorage.getAppointmentsInGroupList(targetId, parseUtil.getTag(update));
             }
-            case GROUP_UNAPPOINTED_TASKS_MENU: {
+            case GROUP_UNAPPOINTED_TASKS_MENU -> {
                 return groupMenuStorage.getUnappointedTasksInGroupList(targetId, parseUtil.getTag(update));
             }
-            case GET_GROUP_SUBJECTS: {
+            case GET_GROUP_SUBJECTS -> {
                 return groupMenuStorage.getSubjectsMenu(targetId);
             }
-            case SET_TASK_SUBJECT_LIST: {
+            case SET_TASK_SUBJECT_LIST -> {
                 if (userRepository.get(parseUtil.getTag(update)).isGroupMode()) {
                     return groupMenuStorage.getSubjectsMenuToAlterGroup(targetId, "Set subject");
                 } else {
                     return subjectMenuStorage.getUserSubjectsListToAlterUser(parseUtil.getTag(update), "Set subject");
                 }
             }
-            case DELETE_GROUP_SUBJECT: {
+            case DELETE_GROUP_SUBJECT -> {
                 return groupMenuStorage.getSubjectsMenuToAlterGroup(targetId, "Delete subject in group");
             }
-            case LIST_TO_ADD_ADMIN: {
+            case LIST_TO_ADD_ADMIN -> {
                 return groupMenuStorage.getUsersInGroupToAlterUser(targetId, update, "Add admin", "Manage admins", Role.DEFAULT);
             }
-            case LIST_TO_REMOVE_ADMIN: {
+            case LIST_TO_REMOVE_ADMIN -> {
                 return groupMenuStorage.getUsersInGroupToAlterUser(targetId, update, "Remove admin", "Manage admins", Role.ADMIN);
             }
-            case KICK_USER: {
+            case KICK_USER -> {
                 return groupMenuStorage.getUsersInGroupToAlterUser(targetId, update, "Kick user", "Show group", Role.DEFAULT);
             }
-            case TRANSFER_OWNERSHIP: {
+            case TRANSFER_OWNERSHIP -> {
                 return groupMenuStorage.getUsersInGroupToAlterUser(targetId, update, "Transfer ownership of", "Show group", null);
             }
-            case SHOW_GROUP_CODE: {
+            case SHOW_GROUP_CODE -> {
                 return groupMenuStorage.getGroupCodeMenu(targetId);
             }
-            case SHOW_UNAPPOINTED_TASK: {
+            case SHOW_UNAPPOINTED_TASK -> {
                 return unappointedTaskMenuStorage.getUnappointedTaskMenu(targetId, update, !update.hasCallbackQuery() || !update.getCallbackQuery().getData().contains("(noback)"));
             }
-            case APPOINTMENT_MANAGE_MENU, APPOINTMENT_EDIT_MENU: {
+            case APPOINTMENT_MANAGE_MENU, APPOINTMENT_EDIT_MENU -> {
                 return appointmentMenuStorage.getAppointmentMenu(targetId, update, !update.hasCallbackQuery() || !update.getCallbackQuery().getData().contains("(noback)"), userRepository.get(parseUtil.getTag(update)).isGroupMode());
             }
-            case MARK_APPOINTMENT_AS_DONE: {
+            case MARK_APPOINTMENT_AS_DONE -> {
                 return appointmentMenuStorage.getMarkAsDoneMenu();
             }
-            case SHOW_GROUP_TASKS: {
+            case SHOW_GROUP_TASKS -> {
                 return groupMenuStorage.getTasksInGroupMenu(targetId);
             }
-            case ADD_PERSONAL_TASK: {
+            case ADD_PERSONAL_TASK -> {
                 return groupMenuStorage.getUsersInGroupToAlterUser(targetId, update, "Add personal task in", "Show group", null);
             }
-            case GROUP_ANNOUNCEMENTS_MENU_MANAGE: {
+            case GROUP_ANNOUNCEMENTS_MENU_MANAGE -> {
                 return groupMenuStorage.getAnnouncementsMenu(targetId, true);
             }
-            case GROUP_ANNOUNCEMENTS_MENU_VIEW: {
+            case GROUP_ANNOUNCEMENTS_MENU_VIEW -> {
                 return groupMenuStorage.getAnnouncementsMenu(targetId, false);
             }
-            case TASK_EDIT_MENU: {
+            case TASK_EDIT_MENU -> {
                 return taskMenuStorage.getTaskEditMenu(targetId, update);
             }
-            case TASK_MANAGE_MENU: {
+            case TASK_MANAGE_MENU -> {
                 return taskMenuStorage.getTaskMenu(targetId, update);
             }
-            case ANNOUNCEMENT_MANAGE_MENU: {
+            case ANNOUNCEMENT_MANAGE_MENU -> {
                 return announcementMenuStorage.getAnnouncementMenu(targetId, update, true, false);
             }
-            case ANNOUNCEMENT_MENU_VIEW: {
+            case ANNOUNCEMENT_MENU_VIEW -> {
                 return announcementMenuStorage.getAnnouncementMenu(targetId, update, false, false);
             }
-            case ANNOUNCEMENT_MENU_IMPINF: {
+            case ANNOUNCEMENT_MENU_IMPINF -> {
                 return announcementMenuStorage.getAnnouncementMenu(targetId, update, false, true);
             }
-            case ANNOUNCEMENT_EDIT_MENU: {
+            case ANNOUNCEMENT_EDIT_MENU -> {
                 return announcementMenuStorage.getAnnouncementEditMenu(targetId, update);
             }
-            case GROUP_IMPORTANT_INFO: {
+            case GROUP_IMPORTANT_INFO -> {
                 return groupMenuStorage.getImportantInfo(targetId);
             }
-            case APPOINMENTS_FOR_TODAY: {
+            case APPOINMENTS_FOR_TODAY -> {
                 appointmentMenuStorage.getAppointmentsForTodayMenu(targetId);
                 return null;
             }
-            case APPOINTMENTS_WITH_DEADLINE_TODAY: {
+            case APPOINTMENTS_WITH_DEADLINE_TODAY -> {
                 appointmentMenuStorage.getAppointmentsWithDeadlineTodayMenu(targetId);
                 return null;
             }
-            case TASKS_FOR_TODAY: {
+            case TASKS_FOR_TODAY -> {
                 Session session = HibernateConfig.getSession();
                 TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(targetId, session);
                 new BotConfig().editMessage(parseUtil.getChatId(update), todayTasksInfo.getMessageId(), generalMenuStorage.getTasksForTodayMenu(todayTasksInfo, session));
                 session.close();
                 return null;
             }
-            case UNAPPOINTED_TASKS_WITH_DEADLINE_TODAY: {
+            case UNAPPOINTED_TASKS_WITH_DEADLINE_TODAY -> {
                 unappointedTaskMenuStorage.getUnappointedTasksWithDeadlineTodayMenu(targetId);
                 return null;
             }
-            case OUTDATED_UNAPPOINTED_TASKS: {
+            case OUTDATED_UNAPPOINTED_TASKS -> {
                 unappointedTaskMenuStorage.getOutdatedUnappointedTasksMenu(targetId);
                 return null;
             }
-            case OUTDATED_APPOINTMENTS: {
+            case OUTDATED_APPOINTMENTS -> {
                 appointmentMenuStorage.getOutdatedAppointmentsMenu(targetId);
                 return null;
             }
-            case SHOW_APPOINTMENT_NO_ATTACHEMETS: {
+            case SHOW_APPOINTMENT_NO_ATTACHEMETS -> {
                 return appointmentMenuStorage.getAppointmentMenuWithoutAttachments(targetId,
-                        !update.hasCallbackQuery() || !update.getCallbackQuery().getData().contains("(noback)"), false);
+                        !update.hasCallbackQuery() || !update.getCallbackQuery().getData().contains("(noback)"));
             }
-            case SHOW_NOTIFICATIONS_IN_GROUP_MENU: {
+            case SHOW_NOTIFICATIONS_IN_GROUP_MENU -> {
                 return groupMenuStorage.getNotificationsInGroupMenu(targetId);
             }
-            case NOTIFICATION_MANAGE_MENU: {
+            case NOTIFICATION_MANAGE_MENU -> {
                 return notificationMenuStorage.getNotificationMenu(targetId);
             }
-            case NOTIFICATION_EDIT_MENU: {
+            case NOTIFICATION_EDIT_MENU -> {
                 return notificationMenuStorage.getNotificationEditMenu(targetId);
             }
-            case MANAGE_ADMINS_MENU: {
+            case MANAGE_ADMINS_MENU -> {
                 return groupMenuStorage.getManageAdminsMenu(targetId);
             }
-            case SUBJECT_MANAGE_MENU: {
+            case SUBJECT_MANAGE_MENU -> {
                 return subjectMenuStorage.getSubjectMenu(targetId);
             }
-            default: {
-                throw new RuntimeException("Wrong menu option(targetID): " + menuMode);
-            }
+            default -> throw new RuntimeException("Wrong menu option(targetID): " + menuMode);
         }
     }
 

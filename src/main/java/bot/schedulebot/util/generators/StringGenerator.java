@@ -11,12 +11,12 @@ public class StringGenerator {
     }
 
     public String generateRandomString() {
-        String str = "";
+        StringBuilder str = new StringBuilder();
         Random random = new Random();
         for (int i = 0; i < 10; i++) {
-            str += (char) random.nextInt(97, 122);
+            str.append((char) random.nextInt(97, 122));
         }
-        return str;
+        return str.toString();
     }
 
 }

@@ -14,7 +14,10 @@ import java.util.Objects;
 
 public abstract class Repository<T extends Entity> {
     protected int entitiesAmount;
-
+    private final Class<T> genericType;
+    protected Repository() {
+        genericType = (Class<T>)((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+    }
     @PostConstruct
     private void init() {
         entitiesAmount = getEntitiesAmount();
@@ -32,20 +35,20 @@ public abstract class Repository<T extends Entity> {
 
     public List<T> getAll() {
         Session session = HibernateConfig.getSession();
-        Query<T> query = session.createQuery("select t from " + ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName() + " t");
+        Query<T> query = session.createQuery("from " + genericType.getTypeName(), genericType);
         List<T> result = query.getResultList();
         session.close();
         return result;
     }
 
     public List<T> getAll(Session session) {
-        Query<T> query = session.createQuery("select t from " + ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName() + " t");
+        Query<T> query = session.createQuery("from " + genericType.getTypeName(), genericType);
         return query.getResultList();
     }
 
     public T get(int id) {
         Session session = HibernateConfig.getSession();
-        Query<T> query = session.createQuery("select t from " + ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName() + " t where t.id = :id");
+        Query<T> query = session.createQuery("from " + genericType.getTypeName() + " t where t.id = :id", genericType);
         query.setParameter("id", id);
         T result = query.uniqueResult();
         session.close();
@@ -53,7 +56,7 @@ public abstract class Repository<T extends Entity> {
     }
 
     public T get(int id, Session session) {
-        Query<T> query = session.createQuery("select t from " + ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName() + " t where t.id = :id");
+        Query<T> query = session.createQuery("from " + genericType.getTypeName() + " t where t.id = :id", genericType);
         query.setParameter("id", id);
         return query.uniqueResult();
     }
@@ -61,7 +64,7 @@ public abstract class Repository<T extends Entity> {
     public void delete(int id) {
         Session session = HibernateConfig.getSession();
         Transaction transaction = session.beginTransaction();
-        Query<T> query = session.createQuery("delete from " + ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName() + " t where t.id = :id");
+        Query<?> query = session.createQuery("delete from " + genericType.getTypeName() + " t where t.id = :id", null);
         query.setParameter("id", id);
         query.executeUpdate();
         transaction.commit();
@@ -70,16 +73,14 @@ public abstract class Repository<T extends Entity> {
 
     public void update(T t, Session session) {
         Transaction transaction = session.beginTransaction();
-        session.update(t);
-        session.flush();
+        session.merge(t);
         transaction.commit();
     }
 
     public void update(T t) {
         Session session = HibernateConfig.getSession();
         Transaction transaction = session.beginTransaction();
-        session.update(t);
-        session.flush();
+        session.merge(t);
         transaction.commit();
         session.close();
     }

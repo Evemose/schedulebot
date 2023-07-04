@@ -5,4 +5,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AppointmentsUnderConstruction extends ObjectsUnderConstruction<Appointment> {
+
+        private AppointmentsUnderConstruction() {
+        }
 }
