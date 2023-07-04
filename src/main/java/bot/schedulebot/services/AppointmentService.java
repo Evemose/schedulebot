@@ -11,6 +11,7 @@ import bot.schedulebot.objectsunderconstruction.ObjectsUnderConstruction;
 import bot.schedulebot.objectsunderconstruction.TasksUnderConstruction;
 import bot.schedulebot.repositories.*;
 import bot.schedulebot.storages.menustorages.MenuStorage;
+import bot.schedulebot.util.ClassFieldsStorage;
 import bot.schedulebot.util.Converter;
 import bot.schedulebot.util.ParseUtil;
 import bot.schedulebot.util.ThreadUtil;
@@ -45,8 +46,8 @@ public class AppointmentService extends Service<Appointment> {
     private final AppointmentsUnderConstruction appointmentsUnderConstruction;
     private final TaskService taskService;
 
-    protected AppointmentService(AppointmentsUnderConstruction appointmentAdditionHelper, Converter converter, AppointmentRepository appointmentRepository, UnappointedTaskRepository unappointedTaskRepository, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, KeyboardGenerator keyboardGenerator, TodayTasksInfoRepository todayTasksInfoRepository, ThreadUtil threadUtil, TodayTasksInfoService todayTasksInfoService, TaskRepository taskRepository, TasksUnderConstruction tasksUnderConstruction, AppointmentsUnderConstruction appointmentsUnderConstruction, TaskService taskService) {
-        super(appointmentRepository, threadUtil, parseUtil, appointmentsUnderConstruction, menuStorage, converter, null);
+    protected AppointmentService(ClassFieldsStorage classFieldsStorage, AppointmentsUnderConstruction appointmentAdditionHelper, Converter converter, AppointmentRepository appointmentRepository, UnappointedTaskRepository unappointedTaskRepository, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, KeyboardGenerator keyboardGenerator, TodayTasksInfoRepository todayTasksInfoRepository, ThreadUtil threadUtil, TodayTasksInfoService todayTasksInfoService, TaskRepository taskRepository, TasksUnderConstruction tasksUnderConstruction, AppointmentsUnderConstruction appointmentsUnderConstruction, TaskService taskService) {
+        super(appointmentRepository, threadUtil, parseUtil, appointmentsUnderConstruction, menuStorage, converter, null, classFieldsStorage, null);
         this.appointmentObjectsUnderConstruction = appointmentAdditionHelper;
         this.appointmentRepository = appointmentRepository;
         this.unappointedTaskRepository = unappointedTaskRepository;

@@ -1,6 +1,9 @@
 package bot.schedulebot.storages.supportingmessagesstorages;
 
 import bot.schedulebot.enums.InstanceAdditionStage;
+import bot.schedulebot.storages.menustorages.GroupMenuStorage;
+import bot.schedulebot.storages.menustorages.SubjectMenuStorage;
+import bot.schedulebot.util.ParseUtil;
 import bot.schedulebot.util.generators.KeyboardGenerator;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -15,11 +18,17 @@ import java.util.List;
 public class TaskAdditionSupportingMessagesStorage implements AdditionSupportingMessagesStorage {
     private final KeyboardGenerator keyboardGenerator;
     private final GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage;
+    private final GroupMenuStorage groupMenuStorage;
+    private final ParseUtil parseUtil;
+    private final SubjectMenuStorage subjectMenuStorage;
 
-    private TaskAdditionSupportingMessagesStorage(KeyboardGenerator keyboardGenerator, GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage) {
+    private TaskAdditionSupportingMessagesStorage(KeyboardGenerator keyboardGenerator, GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage, GroupMenuStorage groupMenuStorage, ParseUtil parseUtil, SubjectMenuStorage subjectMenuStorage) {
 
         this.keyboardGenerator = keyboardGenerator;
         this.generalAdditionSupportingMessagesStorage = generalAdditionSupportingMessagesStorage;
+        this.groupMenuStorage = groupMenuStorage;
+        this.parseUtil = parseUtil;
+        this.subjectMenuStorage = subjectMenuStorage;
     }
 
     @Override
@@ -29,17 +38,17 @@ public class TaskAdditionSupportingMessagesStorage implements AdditionSupporting
             case TASK_START -> {
                 message = getStartOfAdditionMessage();
             }
-            case TASK_FILE, TASK_IMAGE_NO_FILE -> {
-                message = getSkipDocumentStageOfAdditionMessage();
-            }
             case TASK_IMAGE, TASK_NAME_NO_IMAGE -> {
-                message = getSkipImageStageOfAdditionMessage();
+                message = getImageStageOfAdditionMessage();
+            }
+            case TASK_FILE, TASK_IMAGE_NO_FILE -> {
+                message = getFileStageOfAdditionMessage();
             }
             case TASK_NAME -> {
                 message = getNameStageOfAdditionMessage();
             }
             case TASK_DESCRIPTION -> {
-                message = getDescriptionStageOfAdditionMessage();
+                message = getDescriptionStageOfAdditionMessage(update);
             }
             case TASK_SUBJECT -> {
                 message = getSubjectStageOfAdditionMessage();
@@ -51,25 +60,19 @@ public class TaskAdditionSupportingMessagesStorage implements AdditionSupporting
         return message;
     }
 
-    private Message getSkipDocumentStageOfAdditionMessage() {
-        return generalAdditionSupportingMessagesStorage.getYesNoMessage("image");
+    private Message getImageStageOfAdditionMessage() {
+        return getYesNoMessage("document");
     }
 
     private Message getDeadlineStageOfAdditionMessage() {
         Message message = new Message();
-        message.setText("Task added");
+        message.setText("Enter name");
         return message;
     }
 
-//    private Message getImagesStageOfAdditionMessage() {
-//        Message message = new Message();
-//        message.setText("Enter name");
-//        return message;
-//    }
-
     private Message getSubjectStageOfAdditionMessage() {
         Message message = new Message();
-        message.setText("Enter deadline (dd.mm.yyyy)");
+        message.setText("Task added");
         return message;
     }
 
@@ -79,20 +82,44 @@ public class TaskAdditionSupportingMessagesStorage implements AdditionSupporting
         return message;
     }
 
-    private Message getSkipImageStageOfAdditionMessage() {
+    private Message getFileStageOfAdditionMessage() {
         Message message = new Message();
-        message.setText("Enter name");
+        message.setText("Enter deadline (dd.mm.yyyy)");
         return message;
     }
 
-    private Message getDescriptionStageOfAdditionMessage() {
+    private Message getDescriptionStageOfAdditionMessage(Update update) {
         Message message = new Message();
         message.setText("Choose subject");
+        if (update.getCallbackQuery().getData().contains("group") || update.getCallbackQuery().getData().contains(" in ")) {
+            message.setReplyMarkup(groupMenuStorage.getSubjectsMenuToAlterGroup(
+                    parseUtil.getTargetId(update.getCallbackQuery().getData()), "Set subject").getReplyMarkup());
+        } else {
+            message.setReplyMarkup(subjectMenuStorage.getUserSubjectsListToAlterUser(
+                    parseUtil.getTag(update), "Set subject").getReplyMarkup());
+        }
         return message;
     }
 
     private Message getStartOfAdditionMessage() {
-        return generalAdditionSupportingMessagesStorage.getYesNoMessage("file");
+        return getYesNoMessage("image");
+    }
+
+    public Message getYesNoMessage(String base) {
+        Message message = new Message();
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        List<String> text = new ArrayList<>();
+        List<String> callBack = new ArrayList<>();
+        text.add("Yes");
+        text.add("No");
+        callBack.add("Task set " + base + " yes");
+        callBack.add("Task set " + base + " no");
+        keyboard.add(keyboardGenerator.createManyButtonsRow(text, callBack));
+        markup.setKeyboard(keyboard);
+        message.setText("Do you have any " + base + " for this task?");
+        message.setReplyMarkup(markup);
+        return message;
     }
 
 

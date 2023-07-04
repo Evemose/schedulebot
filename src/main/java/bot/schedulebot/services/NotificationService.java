@@ -18,10 +18,7 @@ import bot.schedulebot.repositories.GroupRepository;
 import bot.schedulebot.repositories.NotificationRepository;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.MenuStorage;
-import bot.schedulebot.util.Converter;
-import bot.schedulebot.util.ParseUtil;
-import bot.schedulebot.util.ThreadUtil;
-import bot.schedulebot.util.TimersStorage;
+import bot.schedulebot.util.*;
 import bot.schedulebot.util.generators.KeyboardGenerator;
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -52,8 +49,8 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
     private final KeyboardGenerator keyboardGenerator;
     private final TimersStorage timersStorage;
 
-    protected NotificationService(NotificationsUnderConstruction notificationsUnderConstruction, Converter converter, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, GroupRepository groupRepository, NotificationRepository notificationRepository, KeyboardGenerator keyboardGenerator, TimersStorage timersStorage, ThreadUtil threadUtil) {
-        super(notificationRepository, threadUtil, parseUtil, notificationsUnderConstruction, menuStorage, converter, null);
+    protected NotificationService(NotificationsUnderConstruction notificationsUnderConstruction, Converter converter, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, GroupRepository groupRepository, NotificationRepository notificationRepository, KeyboardGenerator keyboardGenerator, TimersStorage timersStorage, ThreadUtil threadUtil, ClassFieldsStorage classFieldsStorage) {
+        super(notificationRepository, threadUtil, parseUtil, notificationsUnderConstruction, menuStorage, converter, null, classFieldsStorage, null);
         this.notificationsUnderConstruction = notificationsUnderConstruction;
         this.parseUtil = parseUtil;
         this.userRepository = userRepository;
@@ -72,7 +69,7 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
         switch (instanceAdditionStage) {
             case NOTIFICATION_START -> {
                 this.handleNotificationAdditionStart(user, update);
-                messages.add(this.menuStorage.getMenu(MenuMode.ADD_NOTIFICATION, update));
+                messages.add(this.menuStorage.getMenu(MenuMode.NOTIFICATION_START, update));
             }
             case NOTIFICATION_TEXT -> {
                 this.handleNotificationTextSet(user, update);
@@ -222,7 +219,7 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
         this.notificationsUnderConstruction.getEditOrNewNotification().put(this.parseUtil.getTag(update), EditOrNew.EDIT);
         String propertyToChange = callbackData.substring("Change notification ".length()).trim();
         if (propertyToChange.matches("text \\d+")) {
-            resultMessagesList.add(this.menuStorage.getMenu(MenuMode.ADD_NOTIFICATION, update));
+            resultMessagesList.add(this.menuStorage.getMenu(MenuMode.NOTIFICATION_START, update));
             propertyToChange = "TEXT";
         } else if (propertyToChange.matches("frequency \\d+")) {
             resultMessagesList.add(this.menuStorage.getMenu(MenuMode.SET_NOTIFICATION_TIME, update));

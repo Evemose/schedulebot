@@ -8,6 +8,7 @@ import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.enums.TodayTasksInfoMode;
 import bot.schedulebot.objectsunderconstruction.AppointmentsUnderConstruction;
+import bot.schedulebot.objectsunderconstruction.SubjectsUnderConstruction;
 import bot.schedulebot.repositories.TodayTasksInfoRepository;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.services.*;
@@ -37,8 +38,9 @@ public class CallbackQueryHandler {
     private final NotificationService notificationService;
     private final SubjectService subjectService;
     private final GroupMenuStorage groupMenuStorage;
+    private final SubjectsUnderConstruction subjectsUnderConstruction;
 
-    public CallbackQueryHandler(UserRepository userRepository, MenuStorage menuStorage, ServiceController serviceController, ParseUtil parseUtil, AppointmentsUnderConstruction appointmentsUnderConstruction, GroupService groupService, AppointmentService appointmentService, TaskService taskService, AnnouncementService announcementService, TodayTasksInfoRepository todayTasksInfoRepository, NotificationService notificationService, SubjectService subjectService, GroupMenuStorage groupMenuStorage) {
+    public CallbackQueryHandler(UserRepository userRepository, MenuStorage menuStorage, ServiceController serviceController, ParseUtil parseUtil, AppointmentsUnderConstruction appointmentsUnderConstruction, GroupService groupService, AppointmentService appointmentService, TaskService taskService, AnnouncementService announcementService, TodayTasksInfoRepository todayTasksInfoRepository, NotificationService notificationService, SubjectService subjectService, GroupMenuStorage groupMenuStorage, SubjectsUnderConstruction subjectsUnderConstruction) {
         this.userRepository = userRepository;
         this.menuStorage = menuStorage;
         this.serviceController = serviceController;
@@ -53,6 +55,7 @@ public class CallbackQueryHandler {
         this.notificationService = notificationService;
         this.subjectService = subjectService;
         this.groupMenuStorage = groupMenuStorage;
+        this.subjectsUnderConstruction = subjectsUnderConstruction;
     }
 
     List<Message> handleCallbackQuery(Update update) {
@@ -74,9 +77,15 @@ public class CallbackQueryHandler {
             }
             case "Create group" -> {
                 resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.GROUP_START, update, "Add"));
+                u.setMode("Add");
+                u.setInstanceAdditionStage(InstanceAdditionStage.GROUP_NAME);
+                userRepository.update(u);
             }
             case "Show group join menu" -> {
                 groupMenuStorage.handleGroupJoinMenuProvision(update, resultMessagesList);
+                u.setMode("None");
+                u.setInstanceAdditionStage(InstanceAdditionStage.GROUP_JOIN);
+                userRepository.update(u);
             }
             case "Task appointment yes" -> {
                 resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_DATE, update, "Add"));
@@ -85,21 +94,10 @@ public class CallbackQueryHandler {
                 appointmentsUnderConstruction.getObjectsUnderConstructions().get(update.getCallbackQuery().getFrom().getUserName()).setId(-1);
                 resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, "Add"));
             }
-            case "Task set image no" -> {
-                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_NAME_NO_IMAGE, update, "Add"));
-            }
-            case "Task set image yes" -> {
-                taskService.handleTaskSetImageYes(resultMessagesList, u);
-            }
-            case "Task set document yes" -> {
-                taskService.handleTaskSetDocumentYes(resultMessagesList, u);
-            }
-            case "Task set document no" -> {
-                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.TASK_IMAGE_NO_FILE, update, "Add"));
-            }
-            case "Announcement set image no", "Announcement set document no", "Announcement set document yes", "Announcement set image yes" -> {
-                serviceController.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_TITLE, update, "Add");
-            }
+            case "Task set image no", "Task set image yes", "Task set document yes", "Task set document no"  ->
+                    serviceController.handleAddition(InstanceAdditionStage.TASK_START, update, "Add");
+            case "Announcement set image no", "Announcement set document no", "Announcement set document yes", "Announcement set image yes" ->
+                    serviceController.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_TITLE, update, "Add");
             case "Delete this" -> {
                 botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
             }
@@ -125,7 +123,7 @@ public class CallbackQueryHandler {
                 } else if (callbackData.startsWith("Add subject")) {
                     subjectService.handleAdditionStart(update);
                 } else if (callbackData.matches("Add task to group \\d+")) {
-                    taskService.handleTaskAdditionToGroup(update, resultMessagesList, callbackData, u);
+                    taskService.handleAdditionStart(update);
                 } else if (callbackData.matches("Add appointment to \\d+")) {
                     appointmentService.handleAppointmentAdditionInitiation(update, resultMessagesList, u);
                 } else if (callbackData.matches("Show subjects in group \\d+")) {
@@ -199,7 +197,7 @@ public class CallbackQueryHandler {
                         botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
                     }
                     Task.getTaskMenus().put(u.getTag(), update.getCallbackQuery().getMessage().getMessageId());
-                    resultMessagesList.add(menuStorage.getMenu(MenuMode.TASK_MENU, update, parseUtil.getTargetId(callbackData)));
+                    resultMessagesList.add(menuStorage.getMenu(MenuMode.TASK_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.startsWith("Edit")) {
                     menuStorage.handleEditMenuProvision(update, resultMessagesList, callbackData);
                 } else if (callbackData.matches("Delete task \\d+")) {
@@ -210,8 +208,8 @@ public class CallbackQueryHandler {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.ADD_PERSONAL_TASK, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Show announcements in group \\d+")) {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_ANNOUNCEMENTS_MENU_VIEW, update, parseUtil.getTargetId(callbackData)));
-                } else if (callbackData.matches("Add personal task to user \\d+ to \\d+")) {
-                    taskService.handlePersonalTaskAddition(update, resultMessagesList, callbackData, u);
+                } else if (callbackData.matches("Add personal task in \\d+ to \\d+")) {
+                    taskService.handlePersonalTaskAddition(update, callbackData, u);
                 } else if (callbackData.matches("Add announcement to group \\d+")) {
                     announcementService.handleAdditionStart(u, update);
                 } else if (callbackData.startsWith("Show announcement")) {
@@ -226,7 +224,7 @@ public class CallbackQueryHandler {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_IMPORTANT_INFO, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Remove announcement from important \\d+")) {
                     announcementService.removeAnnouncementFromImportant(parseUtil.getTargetId(callbackData));
-                    resultMessagesList.add(menuStorage.getMenu(MenuMode.ANNOUNCEMENT_MENU_MANAGE, update, parseUtil.getTargetId(callbackData)));
+                    resultMessagesList.add(menuStorage.getMenu(MenuMode.ANNOUNCEMENT_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
                     Message message = new Message();
                     message.setText("Announcement removed from important");
                     resultMessagesList.add(0, message);
@@ -297,6 +295,9 @@ public class CallbackQueryHandler {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.LIST_TO_REMOVE_ADMIN, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Manage admins \\d+")) {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.MANAGE_ADMINS_MENU, update, parseUtil.getTargetId(callbackData)));
+                } else if (callbackData.startsWith("Show subject ")) {
+                    subjectsUnderConstruction.getMessageIds().put(u.getTag(), update.getCallbackQuery().getMessage().getMessageId());
+                    resultMessagesList.add(menuStorage.getMenu(MenuMode.SUBJECT_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
                 } else throw new RuntimeException("Wrong inline keyboard command:" + callbackData);
             }
         }

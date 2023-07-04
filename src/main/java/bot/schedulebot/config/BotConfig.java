@@ -145,27 +145,31 @@ public class BotConfig extends TelegramLongPollingBot {
     }
 
     public void editMessage(String chatId, int messageId, Message message) {
-        EditMessageText editMessageText = new EditMessageText();
-        editMessageText.setChatId(chatId);
-        editMessageText.setParseMode("Markdown");
-        editMessageText.setMessageId(messageId);
-        editMessageText.setText(message.getText());
-        editMessageText.setReplyMarkup(message.getReplyMarkup());
+        if (message != null) {
+            EditMessageText editMessageText = new EditMessageText();
+            editMessageText.setChatId(chatId);
+            editMessageText.setParseMode("Markdown");
+            editMessageText.setMessageId(messageId);
+            editMessageText.setText(message.getText());
+            editMessageText.setReplyMarkup(message.getReplyMarkup());
 
-        EditMessageCaption editMessageCaption = new EditMessageCaption();
-        editMessageCaption.setChatId(chatId);
-        editMessageCaption.setParseMode("Markdown");
-        editMessageCaption.setMessageId(messageId);
-        editMessageCaption.setCaption(message.getText());
-        editMessageCaption.setReplyMarkup(message.getReplyMarkup());
+            EditMessageCaption editMessageCaption = new EditMessageCaption();
+            editMessageCaption.setChatId(chatId);
+            editMessageCaption.setParseMode("Markdown");
+            editMessageCaption.setMessageId(messageId);
+            editMessageCaption.setCaption(message.getText());
+            editMessageCaption.setReplyMarkup(message.getReplyMarkup());
 
-        try {
-            execute(editMessageText);
-        } catch (TelegramApiException e) {
             try {
-                execute(editMessageCaption);
-            } catch (TelegramApiException ex) {
-                throw new RuntimeException(ex);
+                execute(editMessageText);
+            } catch (TelegramApiException e) {
+                if (!e.getMessage().contains("exactly the same as a current")) {
+                    try {
+                        execute(editMessageCaption);
+                    } catch (TelegramApiException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
             }
         }
     }

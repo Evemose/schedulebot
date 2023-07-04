@@ -7,6 +7,7 @@ import bot.schedulebot.repositories.GroupRepository;
 import bot.schedulebot.repositories.TodayTasksInfoRepository;
 import bot.schedulebot.storages.menustorages.AppointmentMenuStorage;
 import bot.schedulebot.storages.menustorages.UnappointedTaskMenuStorage;
+import bot.schedulebot.util.ClassFieldsStorage;
 import bot.schedulebot.util.generators.KeyboardGenerator;
 import bot.schedulebot.util.generators.TextGenerator;
 import org.hibernate.Session;

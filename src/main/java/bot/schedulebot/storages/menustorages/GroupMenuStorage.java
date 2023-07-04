@@ -200,10 +200,10 @@ public class GroupMenuStorage {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        groupRepository.get(groupId, session).getUsers().stream().forEach(user -> {
+        groupRepository.get(groupId, session).getUsers().forEach(user -> {
             if (!user.getTag().equals(parseUtil.getTag(update)) &&
                     (requiredRole == null || requiredRole.equals(groupRepository.getUserRole(user.getId(), groupId))))
-                keyboard.add(keyboardGenerator.createSingleButtonRow(user.getName(), callbackBase + " " + user.getId() + " to " + groupId));
+                keyboard.add(keyboardGenerator.createSingleButtonRow(user.getName(), callbackBase + " " + groupId + " to " + user.getId()));
         });
         keyboard.add(keyboardGenerator.createSingleButtonRow("Back", backButtonCallback + " " + groupId));
         markup.setKeyboard(keyboard);
@@ -281,8 +281,7 @@ public class GroupMenuStorage {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         keyboard.add(keyboardGenerator.createSingleButtonRow("Add subject", "Add subject to group " + groupId));
-        keyboard.add(keyboardGenerator.createSingleButtonRow("Delete subject", "Show list to delete subject in group " + groupId));
-        keyboard.add(keyboardGenerator.createSingleButtonRow("Back", "Show group " + groupId));
+        keyboard.addAll(keyboardGenerator.getKeyboardFromSubjectsList(subjects, groupId, true));
 
         markup.setKeyboard(keyboard);
         message.setReplyMarkup(markup);
@@ -416,7 +415,7 @@ public class GroupMenuStorage {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
         List<Announcement> announcements = groupRepository.get(groupId, session).getAnnouncements();
 
-        message.setText(textGenerator.getMessageTextFromAnnouncementsList(announcements) + (isManageMode ? "\n*Choose option:*" : "\n*Choose which you want to view:*"));
+        message.setText(textGenerator.getMessageTextFromAnnouncementsList(announcements) + (isManageMode || announcements.isEmpty() ? "\n*Choose option:*" : "\n*Choose which you want to view:*"));
 
         group.getAnnouncements().stream().forEach(announcement -> {
             keyboard.add(keyboardGenerator.createSingleButtonRow(announcement.getTitle(), "Show announcement " + (isManageMode ? "(manage) " : "") + announcement.getId()));

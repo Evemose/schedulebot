@@ -10,10 +10,7 @@ import bot.schedulebot.enums.Role;
 import bot.schedulebot.objectsunderconstruction.GroupsUnderConstruction;
 import bot.schedulebot.repositories.*;
 import bot.schedulebot.storages.menustorages.MenuStorage;
-import bot.schedulebot.util.Converter;
-import bot.schedulebot.util.ParseUtil;
-import bot.schedulebot.util.ThreadUtil;
-import bot.schedulebot.util.TimersStorage;
+import bot.schedulebot.util.*;
 import org.hibernate.Session;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -39,8 +36,8 @@ public class GroupService extends Service<Group> {
     private final NotificationRepository notificationRepository;
     private final BotConfig botConfig;
 
-    protected GroupService(UserRepository userRepository, GroupRepository groupRepository, MenuStorage menuStorage, GroupsUnderConstruction groupAdditionHelper, ParseUtil parseUtil, TaskService taskService, SubjectRepository subjectRepository, AnnouncementRepository announcementRepository, TimersStorage timersStorage, Converter converter, NotificationRepository notificationRepository, ThreadUtil threadUtil) {
-        super(groupRepository, threadUtil, parseUtil, groupAdditionHelper, menuStorage, converter, null);
+    protected GroupService(ClassFieldsStorage classFieldsStorage, UserRepository userRepository, GroupRepository groupRepository, MenuStorage menuStorage, GroupsUnderConstruction groupAdditionHelper, ParseUtil parseUtil, TaskService taskService, SubjectRepository subjectRepository, AnnouncementRepository announcementRepository, TimersStorage timersStorage, Converter converter, NotificationRepository notificationRepository, ThreadUtil threadUtil) {
+        super(groupRepository, threadUtil, parseUtil, groupAdditionHelper, menuStorage, converter, null, classFieldsStorage, subjectRepository);
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.menuStorage = menuStorage;
@@ -68,26 +65,32 @@ public class GroupService extends Service<Group> {
                 messages.add(menuStorage.getMenu(MenuMode.SET_GROUP_NAME, update));
                 messages.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, user.getGroups().get(user.getGroups().size() - 1).getId()));
             }
-            case GROUP_JOIN -> {
-                if (tryAddUser(userRepository.get(parseUtil.getTag(update)).getId(), update.getMessage().getText())) {
-                    Group group = groupRepository.getAll(session).stream().filter(group1 -> group1.getCode().equals(update.getMessage().getText())).collect(Collectors.toList()).get(0);
-                    messages.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, group.getId()));
-                } else {
-                    Message message1 = new Message();
-                    if (groupRepository.get(update.getMessage().getText(), session) == null) {
-                        message1.setText("Wrong code. Try again");
-                    } else {
-                        message1.setText("You are trying to join group you are already in");
-                    }
-                    message1.setReplyMarkup(menuStorage.getMenu(MenuMode.JOIN_GROUP, update).getReplyMarkup());
-                    messages.add(message1);
-                }
-                groupAdditionHelper.getObjectsUnderConstructions().remove(parseUtil.getTag(update));
-            }
             default -> throw new RuntimeException("Group subject addition stage");
         }
         session.close();
         return messages;
+    }
+
+    public void handleGroupJoin(Update update) {
+        Session session = HibernateConfig.getSession();
+        Message message;
+        if (tryAddUser(userRepository.get(parseUtil.getTag(update)).getId(), update.getMessage().getText())) {
+            Group group = groupRepository.getAll(session).stream().filter(group1 -> group1.getCode().equals(update.getMessage().getText())).collect(Collectors.toList()).get(0);
+            message = menuStorage.getMenu(MenuMode.GROUP_MENU, update, group.getId());
+        } else {
+            message = new Message();
+            if (groupRepository.get(update.getMessage().getText(), session) == null) {
+                message.setText("Wrong code. Try again");
+            } else {
+                message.setText("You are trying to join group you are already in");
+            }
+            message.setReplyMarkup(menuStorage.getMenu(MenuMode.JOIN_GROUP, update).getReplyMarkup());
+        }
+        botConfig.sendMessage(update.getMessage().getChatId().toString(), message);
+        session.close();
+        User user = userRepository.get(parseUtil.getTag(update));
+        user.setInstanceAdditionStage(InstanceAdditionStage.NONE);
+        userRepository.update(user);
     }
 
     private void handleGroupAdditionStart(User user, Session session) {
@@ -164,33 +167,33 @@ public class GroupService extends Service<Group> {
         message.setText("*Ownership transferred.*\nYou are admin now");
         botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
         resultMessagesList.add(message);
-        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData, 2)));
+        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData)));
         session.close();
     }
 
     public void handleUserKick(Update update, List<Message> resultMessagesList, String callbackData, User u) {
         Message message = new Message();
-        kickUser(parseUtil.getTargetId(callbackData, 2), parseUtil.getTargetId(callbackData));
+        kickUser(parseUtil.getTargetId(callbackData), parseUtil.getTargetId(callbackData,2));
         message.setText("User kicked");
         botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
         resultMessagesList.add(message);
-        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData, 2)));
+        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData)));
     }
 
     public void handleAdminRemoval(Update update, List<Message> resultMessagesList, String callbackData) {
         Message message = new Message();
-        removeAdmin(parseUtil.getTargetId(callbackData, 2), parseUtil.getTargetId(callbackData));
+        removeAdmin(parseUtil.getTargetId(callbackData), parseUtil.getTargetId(callbackData, 2));
         message.setText("Admin removed");
         resultMessagesList.add(message);
-        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData, 2)));
+        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData)));
     }
 
     public void handleAdminAddition(Update update, List<Message> resultMessagesList, String callbackData) {
         Message message = new Message();
-        addAdmin(parseUtil.getTargetId(callbackData, 2), parseUtil.getTargetId(callbackData));
+        addAdmin(parseUtil.getTargetId(callbackData), parseUtil.getTargetId(callbackData, 2));
         message.setText("Admin added");
         resultMessagesList.add(message);
-        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData, 2)));
+        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData)));
     }
 
     public void handleGroupDelete(Update update, List<Message> resultMessagesList, String callbackData, User u) {

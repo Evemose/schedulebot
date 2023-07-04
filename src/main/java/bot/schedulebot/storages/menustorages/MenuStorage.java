@@ -52,7 +52,7 @@ public class MenuStorage {
             case GROUPS_INDEX_MENU -> {
                 return groupMenuStorage.getGroupsIndexMenu(parseUtil.getTag(update));
             }
-            case SET_TASK_DOCUMENT -> {
+            case SET_TASK_FILE -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.TASK_FILE, update);
             }
             case NO_SUBJECTS_FOR_TASK_MENU -> {
@@ -64,7 +64,7 @@ public class MenuStorage {
             case SET_SUBJECT_NAME -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.SUBJECT_NAME, update);
             }
-            case ADD_SUBJECT_TO_GROUP -> {
+            case SUBJECT_START -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.SUBJECT_START, update);
             }
             case CREATE_GROUP_FORM -> {
@@ -73,7 +73,7 @@ public class MenuStorage {
             case SET_GROUP_NAME -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.GROUP_NAME, update);
             }
-            case ADD_TASK_TO_GROUP -> {
+            case TASK_START -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.TASK_START, update);
             }
             case SET_TASK_IMAGE -> {
@@ -112,7 +112,7 @@ public class MenuStorage {
             case SET_TASK_IMAGE_SKIP_FILE -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.TASK_IMAGE_NO_FILE, update);
             }
-            case ADD_ANNOUNCEMENT -> {
+            case ANNOUNCEMENT_START -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.ANNOUNCEMENT_START, update);
             }
             case SET_ANNOUNCEMENT_FILE -> {
@@ -133,7 +133,7 @@ public class MenuStorage {
             case SET_ANNOUNCEMENT_TEXT -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.ANNOUNCEMENT_TEXT, update);
             }
-            case ADD_NOTIFICATION -> {
+            case NOTIFICATION_START -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.NOTIFICATION_START, update);
             }
             case SET_NOTIFICATION_TEXT -> {
@@ -148,9 +148,6 @@ public class MenuStorage {
             case SET_NOTIFICATION_FREQUENCY -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.NOTIFICATION_FREQUENCY, update);
             }
-            /*case PIG -> {
-                return pigStorage.getPig(update);
-            }*/
             case UNHANDLED_MESSAGE -> {
                 return generalMenuStorage.getUnhandledMessageReply();
             }
@@ -227,7 +224,7 @@ public class MenuStorage {
                 return groupMenuStorage.getTasksInGroupMenu(targetId);
             }
             case ADD_PERSONAL_TASK: {
-                return groupMenuStorage.getUsersInGroupToAlterUser(targetId, update, "Add personal task to user", "Show group", null);
+                return groupMenuStorage.getUsersInGroupToAlterUser(targetId, update, "Add personal task in", "Show group", null);
             }
             case GROUP_ANNOUNCEMENTS_MENU_MANAGE: {
                 return groupMenuStorage.getAnnouncementsMenu(targetId, true);
@@ -238,10 +235,10 @@ public class MenuStorage {
             case TASK_EDIT_MENU: {
                 return taskMenuStorage.getTaskEditMenu(targetId, update);
             }
-            case TASK_MENU: {
+            case TASK_MANAGE_MENU: {
                 return taskMenuStorage.getTaskMenu(targetId, update);
             }
-            case ANNOUNCEMENT_MENU_MANAGE: {
+            case ANNOUNCEMENT_MANAGE_MENU: {
                 return announcementMenuStorage.getAnnouncementMenu(targetId, update, true, false);
             }
             case ANNOUNCEMENT_MENU_VIEW: {
@@ -299,15 +296,18 @@ public class MenuStorage {
             case MANAGE_ADMINS_MENU: {
                 return groupMenuStorage.getManageAdminsMenu(targetId);
             }
+            case SUBJECT_MANAGE_MENU: {
+                return subjectMenuStorage.getSubjectMenu(targetId);
+            }
             default: {
-                throw new RuntimeException("Wrong menu option(targetID)");
+                throw new RuntimeException("Wrong menu option(targetID): " + menuMode);
             }
         }
     }
 
     public void handleAnnouncementMenuProvision(Update update, List<Message> resultMessagesList, String callbackData) {
         if (callbackData.matches("Show announcement \\(manage\\) \\d+")) {
-            resultMessagesList.add(getMenu(MenuMode.ANNOUNCEMENT_MENU_MANAGE, update, parseUtil.getTargetId(callbackData)));
+            resultMessagesList.add(getMenu(MenuMode.ANNOUNCEMENT_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
         } else if (callbackData.matches("Show announcement \\(impinf\\) \\d+")) {
             resultMessagesList.add(getMenu(MenuMode.ANNOUNCEMENT_MENU_IMPINF, update, parseUtil.getTargetId(callbackData)));
         } else if (callbackData.matches("Show announcement \\d+")) {

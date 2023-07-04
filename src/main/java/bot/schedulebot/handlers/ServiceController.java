@@ -57,9 +57,6 @@ public class ServiceController {
         List<Message> messages = new ArrayList<>();
         try {
             if (Objects.equals(mode, "Add")) {
-                if (update.hasCallbackQuery() || (update.hasMessage() && update.getMessage().getText() != null) &&
-                        !(instanceAdditionStage.equals(InstanceAdditionStage.TASK_IMAGE)
-                                || instanceAdditionStage.equals(InstanceAdditionStage.TASK_FILE)) || instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
                     if (instanceAdditionStage.toString().startsWith("SUBJECT")) {
                         Exchanger<Update> exchanger = subjectsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
                         exchanger.exchange(update);
@@ -68,25 +65,14 @@ public class ServiceController {
                     } else if (instanceAdditionStage.toString().startsWith("APPOINTMENT")) {
                         messages = appointmentService.handleAddition(instanceAdditionStage, update, null);
                     } else if (instanceAdditionStage.toString().startsWith("TASK")) {
-                        messages = taskService.handleAddition(instanceAdditionStage, update, null);
+                        tasksUnderConstruction.getExchangers().get(parseUtil.getTag(update)).exchange(update);
                     } else if (instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
-                        Exchanger<Update> exchanger = announcementsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
-                        exchanger.exchange(update);
+                        announcementsUnderConstruction.getExchangers().get(parseUtil.getTag(update)).exchange(update);
                     } else if (instanceAdditionStage.toString().startsWith("NOTIFICATION")) {
                         messages = notificationService.handleAddition(instanceAdditionStage, update, null);
                     }
-                } else if ((instanceAdditionStage.equals(InstanceAdditionStage.TASK_IMAGE) || instanceAdditionStage.equals(InstanceAdditionStage.ANNOUNCEMENT_IMAGE)) && update.getMessage().getPhoto() != null
-                        || (instanceAdditionStage.equals(InstanceAdditionStage.TASK_FILE) || instanceAdditionStage.equals(InstanceAdditionStage.ANNOUNCEMENT_FILE)) && update.getMessage().getDocument() != null) {
-                    messages = instanceAdditionStage.toString().startsWith("TASK") ?
-                            taskService.handleAddition(instanceAdditionStage, update, null) :
-                            announcementService.handleAddition(instanceAdditionStage, update, null);
-                } else {
-                    Message message = new Message();
-                    message.setText("Do not the bot. Go to the door and think about your actions");
-                    messages.add(message);
-                    messages.add(menuStorage.getMenu(MenuMode.MAIN_MENU, update, userRepository.get(parseUtil.getTag(update)).getId()));
                 }
-            } else if (mode.equals("Edit")) {
+            else {
                 if (instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
                     Exchanger<Update> exchanger = announcementsUnderConstruction.getEditExchangers().get(parseUtil.getTag(update));
                     exchanger.exchange(update);
@@ -98,6 +84,10 @@ public class ServiceController {
                     exchanger.exchange(update);
                 }
                 else {
+                    if (instanceAdditionStage == InstanceAdditionStage.GROUP_JOIN) {
+                        groupService.handleGroupJoin(update);
+                        return null;
+                    }
                     throw new IllegalStateException("Unexpected value: " + instanceAdditionStage);
                 }
             }

@@ -2,6 +2,7 @@ package bot.schedulebot.util;
 
 import bot.schedulebot.entities.Entity;
 import bot.schedulebot.entities.File;
+import bot.schedulebot.entities.Subject;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
@@ -34,14 +35,15 @@ public class ClassFieldsStorage {
                     Field[] fields = Arrays.stream(clazz.getDeclaredFields())
                             .filter(getEntityPropertiesFilter())
                             .sorted(getEntityPropertiesOrderComparator()).toArray(Field[]::new);
+                    Arrays.stream(fields).forEach(field -> field.setAccessible(true));
                     entitiesToAddPropertiesNotCollections.put(clazz, fields);
                     });
         entitiesToAddPropertiesNotCollections.forEach((aClass, fields) -> {
-            System.out.print(aClass.getSimpleName() + ": ");
-            for (Field field : fields) {
-                System.out.print(field.getName() + " ");
-            }
-            System.out.println();
+//            System.out.print(aClass.getSimpleName() + ": ");
+//            for (Field field : fields) {
+//                System.out.print(field.getName() + " ");
+//            }
+//            System.out.println();
         });
     }
 
@@ -51,13 +53,18 @@ public class ClassFieldsStorage {
                         || field.getType().equals(String.class)
                         || field.getType().equals(LocalDate.class)
                         || field.getType().equals(LocalTime.class)
-                        || field.getType().equals(File.class);
+                        || field.getType().equals(File.class)
+                        || field.getType().equals(Subject.class);
     }
 
     private static Comparator<Field> getEntityPropertiesOrderComparator() {
-        return Comparator.comparing(field -> field.getType().isPrimitive()
-                || field.getType().equals(String.class) && !field.getName().equals("image")
-                ? 1 : (field.getType().equals(LocalDate.class)
-                || field.getType().equals(LocalTime.class) ? 0 : -1));
+        return Comparator.comparing(field -> {
+            int res;
+            if(field.getType().isPrimitive() || field.getType().equals(String.class) && !field.getName().equals("image")) res = 1;
+            else if (field.getType().equals(LocalDate.class) || field.getType().equals(LocalTime.class)) res = 0;
+            else if (field.getType().equals(Subject.class)) res = 2;
+            else res = -1;
+            return res;
+        });
     }
 }

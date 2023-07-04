@@ -13,10 +13,10 @@ import java.util.List;
 
 @Component
 public class AnnouncementAdditionSupportingMessagesStorage implements AdditionSupportingMessagesStorage {
-    private final GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage;
+    private final KeyboardGenerator keyboardGenerator;
 
-    public AnnouncementAdditionSupportingMessagesStorage(GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage) {
-        this.generalAdditionSupportingMessagesStorage = generalAdditionSupportingMessagesStorage;
+    public AnnouncementAdditionSupportingMessagesStorage(KeyboardGenerator keyboardGenerator) {
+        this.keyboardGenerator = keyboardGenerator;
     }
 
     @Override
@@ -43,7 +43,9 @@ public class AnnouncementAdditionSupportingMessagesStorage implements AdditionSu
     }
 
     private Message getSkipDocumentStageOfAdditionMessage() {
-        return generalAdditionSupportingMessagesStorage.getYesNoMessage("image");
+        Message message = new Message();
+        message.setText("Enter title");
+        return message;
     }
 
     private Message getTitleStageOfAdditionMessage() {
@@ -53,9 +55,7 @@ public class AnnouncementAdditionSupportingMessagesStorage implements AdditionSu
     }
 
     private Message getSkipImageStageOfAdditionMessage() {
-        Message message = new Message();
-        message.setText("Enter title");
-        return message;
+        return getYesNoMessage("document");
     }
 
     private Message getTextStageOfAdditionMessage() {
@@ -65,7 +65,24 @@ public class AnnouncementAdditionSupportingMessagesStorage implements AdditionSu
     }
 
     private Message getStartOfAdditionMessage() {
-        return generalAdditionSupportingMessagesStorage.getYesNoMessage("file");
+        return getYesNoMessage("image");
+    }
+
+    public Message getYesNoMessage(String base) {
+        Message message = new Message();
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        List<String> text = new ArrayList<>();
+        List<String> callBack = new ArrayList<>();
+        text.add("Yes");
+        text.add("No");
+        callBack.add("Announcement set " + base + " yes");
+        callBack.add("Announcement set " + base + " no");
+        keyboard.add(keyboardGenerator.createManyButtonsRow(text, callBack));
+        markup.setKeyboard(keyboard);
+        message.setText("Do you have any " + base + " for this task?");
+        message.setReplyMarkup(markup);
+        return message;
     }
 
 }

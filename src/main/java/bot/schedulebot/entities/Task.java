@@ -28,7 +28,9 @@ public class Task implements Entity, Serializable {
     @Column(name = "image")
     @Lob
     private String image;
-    @JoinColumn(name = "subject_id")
+    @JoinTable(name = "tasks_subjects",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "subject_id"))
     @ManyToOne(cascade = {CascadeType.REMOVE, CascadeType.REFRESH, CascadeType.MERGE})
     private Subject subject;
     @ManyToOne(cascade = {CascadeType.REMOVE, CascadeType.REFRESH, CascadeType.MERGE})
@@ -45,4 +47,8 @@ public class Task implements Entity, Serializable {
     @Transient
     @Getter
     private static Map<String, Integer> taskMenus = new HashMap<>();
+
+    @Transient
+    @Getter
+    private User targetUser;
 }

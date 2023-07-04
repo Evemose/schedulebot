@@ -12,6 +12,7 @@ import java.io.Serializable;
 @jakarta.persistence.Entity
 @Table(name = "unappointed_tasks")
 @EqualsAndHashCode
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class UnappointedTask implements Entity, Serializable {
     @Id
     //@GeneratedValue
@@ -36,4 +37,12 @@ public class UnappointedTask implements Entity, Serializable {
             joinColumns = @JoinColumn(name = "unappointed_task_id", unique = true),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private User user;
+
+    public UnappointedTask() {
+    }
+
+    public UnappointedTask(Task task) {
+        this.task = task;
+        this.group = task.getGroup();
+    }
 }

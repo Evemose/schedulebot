@@ -11,6 +11,7 @@ import bot.schedulebot.repositories.GroupRepository;
 import bot.schedulebot.repositories.SubjectRepository;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.MenuStorage;
+import bot.schedulebot.util.ClassFieldsStorage;
 import bot.schedulebot.util.Converter;
 import bot.schedulebot.util.ParseUtil;
 import bot.schedulebot.util.ThreadUtil;
@@ -32,8 +33,8 @@ public class SubjectService extends Service<Subject> {
     private final SubjectsUnderConstruction subjectAdditionHelper;
     private final BotConfig botConfig;
 
-    protected SubjectService(UserRepository userRepository, SubjectRepository subjectRepository, Converter converter, ParseUtil parseUtil, MenuStorage menuStorage, GroupRepository groupRepository, SubjectsUnderConstruction subjectAdditionHelper, ThreadUtil threadUtil) {
-        super(subjectRepository, threadUtil, parseUtil, subjectAdditionHelper, menuStorage, converter, null);
+    protected SubjectService(ClassFieldsStorage classFieldsStorage, UserRepository userRepository, SubjectRepository subjectRepository, Converter converter, ParseUtil parseUtil, MenuStorage menuStorage, GroupRepository groupRepository, SubjectsUnderConstruction subjectAdditionHelper, ThreadUtil threadUtil) {
+        super(subjectRepository, threadUtil, parseUtil, subjectAdditionHelper, menuStorage, converter, null, classFieldsStorage, subjectRepository);
         this.userRepository = userRepository;
         this.subjectRepository = subjectRepository;
         this.parseUtil = parseUtil;
@@ -58,11 +59,10 @@ public class SubjectService extends Service<Subject> {
             subjectRepository.delete(parseUtil.getTargetId(callbackData));
             message.setText("Subject deleted");
             botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
-            if (u.isGroupMode()) {
-                resultMessagesList.add(menuStorage.getMenu(MenuMode.GET_GROUP_SUBJECTS, update, groupId));
-            } else {
-                resultMessagesList.add(menuStorage.getMenu(MenuMode.SHOW_SUBJECTS_OF_USER, update));
-            }
+            botConfig.editMessage(u.getChatId(),
+                    subjectAdditionHelper.getMessageIds().get(u.getTag()),
+                    groupId == -132 ? menuStorage.getMenu(MenuMode.SHOW_SUBJECTS_OF_USER, update)
+                            : menuStorage.getMenu(MenuMode.GET_GROUP_SUBJECTS, update, groupId));
             session.close();
         } catch (DataIntegrityViolationException e) {
             message.setText("Subject still has tasks related to it");
@@ -77,7 +77,7 @@ public class SubjectService extends Service<Subject> {
             Exchanger<Update> exchanger = subjectAdditionHelper.getExchangers().get(parseUtil.getTag(update));
 
             botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
-                    menuStorage.getMenu(MenuMode.ADD_SUBJECT_TO_GROUP, update));
+                    menuStorage.getMenu(MenuMode.SUBJECT_START, update));
             entity.setName(exchanger.exchange(null).getMessage().getText());
 
             subjectRepository.add(entity);
@@ -110,6 +110,6 @@ public class SubjectService extends Service<Subject> {
         else {
             subject.setUser(userRepository.get(parseUtil.getTag(update)));
         }
-        handleAddition(InstanceAdditionStage.NONE, update, subject);
+        addEntity(update, subject);
     }
 }

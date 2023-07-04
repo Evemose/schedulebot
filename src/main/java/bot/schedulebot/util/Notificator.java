@@ -33,15 +33,6 @@ public class Notificator {
         this.parseUtil = parseUtil;
         this.generalMenuStorage = generalMenuStorage;
     }
-
-    public void sendNotificationsToGroupUsersAboutNewAppointment(Group group, Update update, Task task) {
-        group.getUsers().stream().filter(user -> !user.getTag().equals(parseUtil.getTag(update)) && user.isWantToGenNotifications()).forEach(user -> {
-            sendNotificationToUserAboutNewAppointment(
-                    user.getUnappointedTasks().stream().filter(unappointedTask -> unappointedTask.getTask().equals(task)).toList().get(0).getId(),
-                    user.getChatId());
-        });
-    }
-
     public void sendNotificationsToGroupUsersAboutNewAnnouncement(List<User> users, Update update, Announcement announcement) {
         users.stream().filter(user -> !user.getTag().equals(parseUtil.getTag(update)) && user.isWantToGenNotifications()).forEach(user -> {
             if (user.isWantToGenNotifications())
@@ -50,8 +41,7 @@ public class Notificator {
     }
 
     public void sendPersonalNotificationAboutNewTask(User user, UnappointedTask unappointedTask) {
-        User u = userRepository.get(tasksUnderConstruction.getTaskTargets().get(user.getTag()));
-        sendNotificationToUserAboutNewAppointment(unappointedTask.getId(), u.getChatId());
+        sendNotificationToUserAboutNewAppointment(unappointedTask.getId(), user.getChatId());
     }
 
     private void sendNotificationToUserAboutNewAnnouncement(int announcementId, String chatId) {

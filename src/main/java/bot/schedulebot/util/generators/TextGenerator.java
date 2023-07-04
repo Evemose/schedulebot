@@ -156,4 +156,15 @@ public class TextGenerator {
                 "\n\n*Next notification date:* " + notification.getDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
         return res;
     }
+
+    public String getMessageTextFromSubject(Subject subject) {
+        StringBuilder res = new StringBuilder("Name: ");
+        res.append(subject.getName()).append("\n\n");
+        res.append("Tasks: ");
+        for (Task task :
+                subject.getTasks()) {
+            res.append(task.getName()).append(", ");
+        }
+        return res.substring(0, res.length()-2) + '\n';
+    }
 }

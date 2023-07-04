@@ -57,13 +57,6 @@ public class User implements Entity, Serializable {
     @EqualsAndHashCode.Exclude
     private TodayTasksInfo todayTasksInfo;
 
-    /*@Enumerated(EnumType.STRING)
-    @ElementCollection
-    @CollectionTable(name = "gif_stages", joinColumns = @JoinColumn(name = "user_id"))
-    @MapKeyColumn(name = "gif_type")
-    @Column(name = "stage")
-    private Map<GifStickerType, Integer> gifStages;*/
-
     public User() {
         wantToGenNotifications = true;
         instanceAdditionStage = InstanceAdditionStage.NONE;

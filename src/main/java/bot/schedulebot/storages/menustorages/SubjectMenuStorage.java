@@ -68,8 +68,7 @@ public class SubjectMenuStorage {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         keyboard.add(keyboardGenerator.createSingleButtonRow("Add subject", "Add subject to user " + user.getId()));
-        keyboard.add(keyboardGenerator.createSingleButtonRow("Delete subject", "Show list to delete subject of user " + user.getId()));
-        keyboard.add(keyboardGenerator.createSingleButtonRow("Back", "Show main menu of " + user.getId()));
+        keyboard.addAll(keyboardGenerator.getKeyboardFromSubjectsList(subjects, user.getId(), false));
 
         markup.setKeyboard(keyboard);
         message.setReplyMarkup(markup);
@@ -85,7 +84,7 @@ public class SubjectMenuStorage {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        keyboard.add(keyboardGenerator.createSingleButtonRow("Add subject", "Add subject to group " + parseUtil.getTargetId(callbackData, tasksUnderConstruction.getTaskTypes().get(parseUtil.getTag(update)).equals(TaskType.PERSONAL) ? 2 : 1)));
+        keyboard.add(keyboardGenerator.createSingleButtonRow("Add subject", "Add subject to group " + parseUtil.getTargetId(callbackData)));
         keyboard.add(keyboardGenerator.createSingleButtonRow("Back", "Show group " + parseUtil.getTargetId(callbackData)));
         markup.setKeyboard(keyboard);
 
@@ -107,6 +106,29 @@ public class SubjectMenuStorage {
 
         message.setText("*No subjects of user. Cant add appointment*");
         message.setReplyMarkup(markup);
+        return message;
+    }
+
+    public Message getSubjectMenu(int subjectId) {
+        Message message = new Message();
+        Session session = HibernateConfig.getSession();
+        Subject subject = session.get(Subject.class, subjectId);
+
+        message.setText("*Subject " + subject.getName() + "*\n\n" + textGenerator.getMessageTextFromSubject(subject));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        keyboard.add(keyboardGenerator.createSingleButtonRow("Edit", "Edit subject " + subject.getId()));
+        keyboard.add(keyboardGenerator.createSingleButtonRow("Delete", "Delete subject " + subject.getId()));
+        keyboard.add(keyboardGenerator.createSingleButtonRow("Back",
+                subject.getUser() == null ? "Show subjects in group " + subject.getGroup().getId() :
+                        "Show subjects of " + subject.getUser().getId()));
+
+        markup.setKeyboard(keyboard);
+        message.setReplyMarkup(markup);
+
+        session.close();
         return message;
     }
 }

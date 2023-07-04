@@ -9,16 +9,12 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+@Getter
 @Component
 public class TasksUnderConstruction extends ObjectsUnderConstruction<Task> {
-    @Getter
-    Map<String, TaskType> taskTypes;
-    @Getter
-    Map<String, String> taskTargets;
-    @Getter
-    Map<String, EditOrNew> editOrNewTask;
-    @Getter
-    Map<String, Integer> messageIds;
+    private final Map<String, TaskType> taskTypes;
+    private final Map<String, String> taskTargets;
+    private final Map<String, EditOrNew> editOrNewTask;
 
     public TasksUnderConstruction() {
         taskTypes = new HashMap<>();
