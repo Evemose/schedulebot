@@ -3,7 +3,6 @@ package bot.schedulebot.repositories;
 import bot.schedulebot.config.HibernateConfig;
 import bot.schedulebot.entities.Entity;
 import jakarta.annotation.PostConstruct;
-import jakarta.persistence.NamedQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;

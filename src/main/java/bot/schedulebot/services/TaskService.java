@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @org.springframework.stereotype.Service
@@ -173,8 +174,8 @@ public class TaskService extends Service<Task> {
     @Override
     protected void persistEntity(Update update, Task task) {
         if (task.getGroup() != null) {
-            persistGroupTask(update, task);
             super.persistEntity(update, task);
+            persistGroupTask(update, task);
         } else {
             taskRepository.add(task);
             persistPersonalTask(update, task);
@@ -190,6 +191,16 @@ public class TaskService extends Service<Task> {
         todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
         session.close();
         appointmentService.handleAdditionStart(update, unappointedTask);
+    }
+
+    @Override
+    protected Message inspectValueSuitability(Class<?> fieldType, Object value, Task t) {
+        Message message = new Message();
+        if (fieldType.equals(LocalDate.class) && ((LocalDate)value).isBefore(LocalDate.now())) {
+            message.setText("Date can't be in the past");
+            return message;
+        }
+        return super.inspectValueSuitability(fieldType, value, t);
     }
 
     private void persistGroupTask(Update update, Task task) {

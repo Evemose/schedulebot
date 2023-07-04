@@ -217,7 +217,7 @@ public class MenuStorage {
             case SHOW_UNAPPOINTED_TASK: {
                 return unappointedTaskMenuStorage.getUnappointedTaskMenu(targetId, update, !update.hasCallbackQuery() || !update.getCallbackQuery().getData().contains("(noback)"));
             }
-            case APPOINTMENT_MANAGE_MENU: {
+            case APPOINTMENT_MANAGE_MENU, APPOINTMENT_EDIT_MENU: {
                 return appointmentMenuStorage.getAppointmentMenu(targetId, update, !update.hasCallbackQuery() || !update.getCallbackQuery().getData().contains("(noback)"), userRepository.get(parseUtil.getTag(update)).isGroupMode());
             }
             case MARK_APPOINTMENT_AS_DONE: {

@@ -1,7 +1,10 @@
 package bot.schedulebot.util;
 
 import bot.schedulebot.config.BotConfig;
-import bot.schedulebot.entities.*;
+import bot.schedulebot.entities.Announcement;
+import bot.schedulebot.entities.TodayTasksInfo;
+import bot.schedulebot.entities.UnappointedTask;
+import bot.schedulebot.entities.User;
 import bot.schedulebot.objectsunderconstruction.TasksUnderConstruction;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.GeneralMenuStorage;

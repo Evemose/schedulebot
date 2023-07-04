@@ -13,13 +13,18 @@ import bot.schedulebot.util.Converter;
 import bot.schedulebot.util.ParseUtil;
 import bot.schedulebot.util.ThreadUtil;
 import bot.schedulebot.util.generators.KeyboardGenerator;
+import lombok.SneakyThrows;
 import org.hibernate.Session;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.Exchanger;
 
 @org.springframework.stereotype.Service
 public class AppointmentService extends Service<Appointment> {
@@ -95,14 +100,32 @@ public class AppointmentService extends Service<Appointment> {
 
     public void handleAppointmentDateChange(Update update, String callbackData, User u) {
         u.setGroupMode(callbackData.contains("group"));
-        u.setInstanceAdditionStage(InstanceAdditionStage.APPOINTMENT_START);
-        u.setMode("Add");
+        u.setInstanceAdditionStage(InstanceAdditionStage.APPOINTMENT_DATE);
+        u.setMode("Edit");
         userRepository.update(u);
-        int unappointedTaskId = resetAppointment(parseUtil.getTargetId(callbackData));
-        Session session = HibernateConfig.getSession();
-        UnappointedTask unappointedTask = unappointedTaskRepository.get(unappointedTaskId, session);
-        addEntity(update, new Appointment(unappointedTask));
-        session.close();
+        appointmentObjectsUnderConstruction.getEditExchangers().put(u.getTag(), new Exchanger<>());
+        editEntity(update, "date");
+    }
+
+    @SneakyThrows
+    @Override
+    protected Message inspectValueSuitability(Class<?> fieldType, Object value, Appointment t) {
+        if (fieldType.equals(LocalDate.class)) {
+            Field field = Task.class.getDeclaredField("deadline");
+            field.setAccessible(true);
+            LocalDate deadline = (LocalDate) field.get(t.getTask());
+            if (((LocalDate)value).isAfter(deadline)) {
+                Message message = new Message();
+                message.setText("Date is after deadline. Are you sure you want to appoint it?");
+                message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getYesNoKeyboard()));
+                return message;
+            } else if (((LocalDate)value).isBefore(LocalDate.now())) {
+                Message message = new Message();
+                message.setText("Date cannot be before today");
+                return message;
+            }
+        }
+        return super.inspectValueSuitability(fieldType, value, t);
     }
 
     public void handleMarkAppointmentAsDone(Update update, List<Message> resultMessagesList, String callbackData, User u) {
@@ -120,28 +143,6 @@ public class AppointmentService extends Service<Appointment> {
         }
     }
 
-    private int resetAppointment(int id) {
-        Session session = HibernateConfig.getSession();
-        Appointment appointment = appointmentRepository.get(id, session);
-        UnappointedTask unappointedTask = new UnappointedTask(appointment);
-        appointment.setId(-1);
-        appointmentObjectsUnderConstruction.getObjectsUnderConstructions().put(appointment.getUser().getTag(), appointment);
-        unappointedTaskRepository.add(unappointedTask);
-        session.close();
-
-        try {
-            appointmentRepository.delete(id);
-        } catch (DataIntegrityViolationException e) {
-            Session session1 = HibernateConfig.getSession();
-            TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(appointment.getUser().getTag(), session1);
-            todayTasksInfoService.resetTodayTasksInfo(todayTasksInfo);
-            appointmentRepository.delete(id);
-            todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session1);
-            session1.close();
-        }
-        return unappointedTask.getId();
-    }
-
     public void appointTaskForDeadline(List<Message> resultMessagesList, Update update) {
         Session session = HibernateConfig.getSession();
         String text, callbackData = update.getCallbackQuery().getData();
@@ -156,66 +157,66 @@ public class AppointmentService extends Service<Appointment> {
         }
 
         TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(u.getTag(), session);
-        Appointment appointment;
 
-        if (!text.contains("Appointed date")) {
-            UnappointedTask unappointedTask = unappointedTaskRepository.get(parseUtil.getTargetId(callbackData), session);
-
-            appointment = new Appointment();
-
-            if (unappointedTask != null) {
-                appointment.setTask(unappointedTask.getTask());
-                appointment.setGroup(unappointedTask.getGroup());
-                appointment.setUser(unappointedTask.getUser());
-                appointment.setDate(unappointedTask.getTask().getDeadline());
-                try {
-                    unappointedTaskRepository.delete(parseUtil.getTargetId(callbackData));
-                } catch (DataIntegrityViolationException e) { // related to tasks info of use
-                    todayTasksInfoService.resetTodayTasksInfo(todayTasksInfo);
-                    unappointedTaskRepository.delete(parseUtil.getTargetId(callbackData), session);
-                }
-                appointmentRepository.add(appointment);
-                resultMessagesList.add(menuStorage.getMenu(MenuMode.APPOINTMENT_MANAGE_MENU, update, appointment.getId()));
-            }
+        if (!Objects.requireNonNull(text).contains("Appointed on")) {
+            appointUnappointedTaskForDeadline(resultMessagesList, update, session, callbackData, todayTasksInfo);
         } else { //in case task being appointed from appointment menu and not unappointed task menu
-            appointment = appointmentRepository.get(parseUtil.getTargetId(callbackData), session);
-            appointment.setDate(appointment.getTask().getDeadline());
-            appointmentRepository.update(appointment);
-            try {
-                botConfig.editMessage(u.getChatId(),
-                        update.getCallbackQuery().getMessage().getMessageId(),
-                        menuStorage.getMenu(MenuMode.SHOW_APPOINTMENT_NO_ATTACHEMETS, update, appointment.getId()));
-            } catch (RuntimeException e) {
-                // in case current appointed date equals previous
-            }
-            resultMessagesList.add(menuStorage.getMenu(MenuMode.SET_APPOINTMENT_DATE, update));
+            appointAppointmentForDeadline(resultMessagesList, update, session, callbackData, u);
         }
-
-        if (todayTasksInfo != null) {
-            todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
-        }
-
+        todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
         session.close();
+    }
+
+    private void appointAppointmentForDeadline(List<Message> resultMessagesList, Update update, Session session, String callbackData, User u) {
+        Appointment appointment;
+        appointment = appointmentRepository.get(parseUtil.getTargetId(callbackData), session);
+        appointment.setDate(appointment.getTask().getDeadline());
+        appointmentRepository.update(appointment);
+        try {
+            botConfig.editMessage(u.getChatId(),
+                    update.getCallbackQuery().getMessage().getMessageId(),
+                    menuStorage.getMenu(MenuMode.SHOW_APPOINTMENT_NO_ATTACHEMETS, update, appointment.getId()));
+        } catch (RuntimeException ignored) {
+            // in case current appointed date equals previous
+        }
+        resultMessagesList.add(menuStorage.getMenu(MenuMode.SET_APPOINTMENT_DATE, update));
+    }
+
+    private void appointUnappointedTaskForDeadline(List<Message> resultMessagesList, Update update, Session session, String callbackData, TodayTasksInfo todayTasksInfo) {
+        Appointment appointment;
+        UnappointedTask unappointedTask = unappointedTaskRepository.get(parseUtil.getTargetId(callbackData), session);
+
+        if (unappointedTask != null) {
+            appointment = new Appointment(unappointedTask);
+            appointment.setDate(unappointedTask.getTask().getDeadline());
+            try {
+                unappointedTaskRepository.delete(parseUtil.getTargetId(callbackData));
+            } catch (DataIntegrityViolationException e) { // related to tasks info of use
+                todayTasksInfoService.resetTodayTasksInfo(todayTasksInfo);
+                unappointedTaskRepository.delete(parseUtil.getTargetId(callbackData), session);
+            }
+            appointmentRepository.add(appointment);
+            resultMessagesList.add(menuStorage.getMenu(MenuMode.APPOINTMENT_MANAGE_MENU, update, appointment.getId()));
+        }
     }
 
     public void appointTaskForTomorrow(Update update) {
         User u = userRepository.get(parseUtil.getTag(update));
         Appointment appointment = appointmentRepository.get(parseUtil.getTargetId(update.getCallbackQuery().getData()));
+        u.setGroupMode(appointment.getGroup() != null);
+        userRepository.update(u);
         appointment.setDate(LocalDate.now().plusDays(1));
         appointmentRepository.update(appointment);
 
         Session session = HibernateConfig.getSession();
         TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(u.getTag(), session);
-        if (todayTasksInfo != null) {
-            todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
-        }
+        todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
         session.close();
-
         try {
             botConfig.editMessage(u.getChatId(),
                     update.getCallbackQuery().getMessage().getMessageId(),
                     menuStorage.getMenu(MenuMode.SHOW_APPOINTMENT_NO_ATTACHEMETS, update, appointment.getId()));
-        } catch (RuntimeException e) {
+        } catch (RuntimeException ignored) {
             // in case current appointed date equals previous
         }
     }

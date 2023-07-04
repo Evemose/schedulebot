@@ -2,7 +2,6 @@ package bot.schedulebot.repositories;
 
 import bot.schedulebot.config.HibernateConfig;
 import bot.schedulebot.entities.Announcement;
-import bot.schedulebot.entities.Task;
 import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;

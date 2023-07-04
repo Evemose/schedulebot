@@ -8,9 +8,7 @@ import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.services.TodayTasksInfoService;
 import bot.schedulebot.util.DateTimeUtil;
 import bot.schedulebot.util.Notificator;
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
-import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

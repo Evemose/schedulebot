@@ -14,9 +14,11 @@ import java.util.List;
 @Component
 public class AnnouncementAdditionSupportingMessagesStorage implements AdditionSupportingMessagesStorage {
     private final KeyboardGenerator keyboardGenerator;
+    private final GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage;
 
-    public AnnouncementAdditionSupportingMessagesStorage(KeyboardGenerator keyboardGenerator) {
+    public AnnouncementAdditionSupportingMessagesStorage(KeyboardGenerator keyboardGenerator, GeneralAdditionSupportingMessagesStorage generalAdditionSupportingMessagesStorage) {
         this.keyboardGenerator = keyboardGenerator;
+        this.generalAdditionSupportingMessagesStorage = generalAdditionSupportingMessagesStorage;
     }
 
     @Override
@@ -55,7 +57,7 @@ public class AnnouncementAdditionSupportingMessagesStorage implements AdditionSu
     }
 
     private Message getSkipImageStageOfAdditionMessage() {
-        return getYesNoMessage("document");
+        return generalAdditionSupportingMessagesStorage.getYesNoMessage("document", "announcement");
     }
 
     private Message getTextStageOfAdditionMessage() {
@@ -65,7 +67,7 @@ public class AnnouncementAdditionSupportingMessagesStorage implements AdditionSu
     }
 
     private Message getStartOfAdditionMessage() {
-        return getYesNoMessage("image");
+        return generalAdditionSupportingMessagesStorage.getYesNoMessage("image", "announcement");
     }
 
     public Message getYesNoMessage(String base) {

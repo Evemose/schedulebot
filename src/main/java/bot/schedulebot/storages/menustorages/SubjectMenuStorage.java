@@ -3,7 +3,6 @@ package bot.schedulebot.storages.menustorages;
 import bot.schedulebot.config.HibernateConfig;
 import bot.schedulebot.entities.Subject;
 import bot.schedulebot.entities.User;
-import bot.schedulebot.enums.TaskType;
 import bot.schedulebot.objectsunderconstruction.TasksUnderConstruction;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.util.ParseUtil;

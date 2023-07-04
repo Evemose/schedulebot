@@ -70,9 +70,11 @@ public class AppointmentMenuStorage {
     }
 
     public Message getAppointmentMenu(int appointmentId, Update update, boolean hasBackButton, boolean isGroupMode) {
-
         Session session = HibernateConfig.getSession();
         Appointment appointment = appointmentRepository.get(appointmentId, session);
+        User u = userRepository.get(parseUtil.getTag(update));
+        u.setGroupMode(appointment.getGroup() != null);
+        userRepository.update(u);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(keyboardGenerator.getAppointmentKeyboard(appointment, hasBackButton, isGroupMode));
 

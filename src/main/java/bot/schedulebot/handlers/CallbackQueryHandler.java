@@ -64,7 +64,7 @@ public class CallbackQueryHandler {
         User u = userRepository.get(update.getCallbackQuery().getFrom().getUserName());
         if (callbackData.startsWith("Add")) u.setMode("Add");
         else if (callbackData.startsWith("Change")) u.setMode("Edit");
-        if (!(callbackData.startsWith("Task") || callbackData.startsWith("Announcement") || callbackData.startsWith("Notification"))) {
+        if (!callbackData.matches("yes|no")) {
             u.setInstanceAdditionStage(InstanceAdditionStage.NONE);
             userRepository.update(u);
         }
@@ -84,17 +84,9 @@ public class CallbackQueryHandler {
                 u.setInstanceAdditionStage(InstanceAdditionStage.GROUP_JOIN);
                 userRepository.update(u);
             }
-            case "Task appointment yes" -> {
-                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_DATE, update, "Add"));
+            case "yes", "no" -> {
+                serviceController.handleAddition(u.getInstanceAdditionStage(), update, u.getMode());
             }
-            case "Task appointment no" -> {
-                appointmentsUnderConstruction.getObjectsUnderConstructions().get(update.getCallbackQuery().getFrom().getUserName()).setId(-1);
-                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, "Add"));
-            }
-            case "Task set image no", "Task set image yes", "Task set document yes", "Task set document no"  ->
-                    serviceController.handleAddition(InstanceAdditionStage.TASK_START, update, "Add");
-            case "Announcement set image no", "Announcement set document no", "Announcement set document yes", "Announcement set image yes" ->
-                    serviceController.handleAddition(InstanceAdditionStage.ANNOUNCEMENT_TITLE, update, "Add");
             case "Delete this" -> {
                 botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
             }
@@ -211,7 +203,7 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Delete announcement \\d+")) {
                     announcementService.handleAnnouncementDeletion(update, resultMessagesList, callbackData, u);
                 } else if (callbackData.startsWith("Change")) {
-                    serviceController.handlePropertyChange(update, resultMessagesList, callbackData, u);
+                    serviceController.handlePropertyChange(update, callbackData, u);
                 } else if (callbackData.matches("Mark announcement as important \\d+")) {
                     announcementService.handleMarkAnnouncementAsImportant(update, resultMessagesList, callbackData);
                 } else if (callbackData.matches("Show important info in group \\d+")) {
@@ -268,7 +260,8 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Add notification to \\d+")) {
                     notificationService.handleAdditionStart(update);
                 } else if (callbackData.matches("Notification \\d{4}-\\d{2}-\\d{2}")) {
-                    serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_START, update, "Add");
+                    botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
+                    serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_START, update, u.getMode());
                 } else if (callbackData.matches("Show notification \\d+")) {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.NOTIFICATION_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Delete notification \\d+")) {

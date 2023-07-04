@@ -8,11 +8,6 @@ import bot.schedulebot.util.generators.KeyboardGenerator;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 public class TaskAdditionSupportingMessagesStorage implements AdditionSupportingMessagesStorage {
@@ -61,7 +56,7 @@ public class TaskAdditionSupportingMessagesStorage implements AdditionSupporting
     }
 
     private Message getImageStageOfAdditionMessage() {
-        return getYesNoMessage("document");
+        return generalAdditionSupportingMessagesStorage.getYesNoMessage("file", "task");
     }
 
     private Message getDeadlineStageOfAdditionMessage() {
@@ -98,29 +93,11 @@ public class TaskAdditionSupportingMessagesStorage implements AdditionSupporting
             message.setReplyMarkup(subjectMenuStorage.getUserSubjectsListToAlterUser(
                     parseUtil.getTag(update), "Set subject").getReplyMarkup());
         }
+        message.getReplyMarkup().setKeyboard(message.getReplyMarkup().getKeyboard().subList(0, message.getReplyMarkup().getKeyboard().size()-2));
         return message;
     }
 
     private Message getStartOfAdditionMessage() {
-        return getYesNoMessage("image");
+        return generalAdditionSupportingMessagesStorage.getYesNoMessage("image", "task");
     }
-
-    public Message getYesNoMessage(String base) {
-        Message message = new Message();
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        List<String> text = new ArrayList<>();
-        List<String> callBack = new ArrayList<>();
-        text.add("Yes");
-        text.add("No");
-        callBack.add("Task set " + base + " yes");
-        callBack.add("Task set " + base + " no");
-        keyboard.add(keyboardGenerator.createManyButtonsRow(text, callBack));
-        markup.setKeyboard(keyboard);
-        message.setText("Do you have any " + base + " for this task?");
-        message.setReplyMarkup(markup);
-        return message;
-    }
-
-
 }

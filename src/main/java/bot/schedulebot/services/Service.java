@@ -27,7 +27,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.Exchanger;
 
 public abstract class Service<T extends Entity> {
@@ -62,16 +61,11 @@ public abstract class Service<T extends Entity> {
                 }
 
                 Exchanger<Update> exchanger = objectsUnderConstruction.getEditExchangers().get(parseUtil.getTag(update));
-                Message message = new Message();
-                message.setText("Send new " + Arrays.toString(fieldName.split("(?=[A-Z])")).replace("[", "").replace("]", "").replace(",", " ").toLowerCase() + ":");
+                Message message = getFieldMessage(fieldName, update);
                 botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(), message);
 
-                Update newValueUpdate = exchanger.exchange(null);
-                Object newValue = parseUpdate(field, newValueUpdate);
-                while (newValue == null) {
-                    newValueUpdate = exchanger.exchange(null);
-                    newValue = parseUpdate(field, newValueUpdate);
-                }
+                Object newValue = getNewValue(update, exchanger, t, field);
+                if (newValue == null) return;
                 updateEntity(update, t, field, newValue);
             } catch (InterruptedException ignored) {
             } catch (IllegalAccessException e) {
@@ -81,6 +75,13 @@ public abstract class Service<T extends Entity> {
                 ((ParameterizedType)(this.getClass().getGenericSuperclass())).getActualTypeArguments()[0].getTypeName()
                         + " " + fieldName + " edit thread of " + update.getCallbackQuery().getFrom().getUserName()).start();
     }
+
+    protected Message getFieldMessage(String fieldName, Update update) {
+        Message message = new Message();
+        message.setText("Send new " + Arrays.toString(fieldName.split("(?=[A-Z])")).replace("[", "").replace("]", "").replace(",", " ").toLowerCase() + ":");
+        return message;
+    }
+
     protected void addEntity(Update update, T t) {
         Exchanger<Update> exchanger = new Exchanger<>();
         objectsUnderConstruction.getExchangers().put(parseUtil.getTag(update), exchanger);
@@ -98,10 +99,10 @@ public abstract class Service<T extends Entity> {
         }, entityClass.getTypeName() + " add thread of " + update.getCallbackQuery().getFrom().getUserName()).start();
     }
 
+    protected Message inspectValueSuitability(Class<?> fieldType, Object value, T t) {return null;}
+
     private void setEveryFieldValue(Update update, Exchanger<Update> exchanger, T t) throws InterruptedException, IllegalAccessException {
-        Update newValueUpdate;
         Message message = new Message();
-        System.out.println(Arrays.toString(classFieldsStorage.getEntitiesToAddPropertiesNotCollections().get(entityClass)));
         for(Field field : classFieldsStorage.getEntitiesToAddPropertiesNotCollections().get(entityClass)) {
             if (field.getName().equals("image") || field.getType().equals(File.class)) {
                 if (!isUserWantToSetField(update, exchanger, field)) continue;
@@ -109,12 +110,8 @@ public abstract class Service<T extends Entity> {
                 botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
                         message);
             }
-            newValueUpdate = exchanger.exchange(null);
-            Object newValue = parseUpdate(field, newValueUpdate);
-            while (newValue == null) {
-                newValueUpdate = exchanger.exchange(null);
-                newValue = parseUpdate(field, newValueUpdate);;
-            }
+            Object newValue = getNewValue(update, exchanger, t, field);
+            if (newValue == null) return;
             field.set(t, newValue);
             botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
                     menuStorage.getMenu(MenuMode.valueOf("SET_"
@@ -123,6 +120,39 @@ public abstract class Service<T extends Entity> {
                             update));
         }
     }
+
+    private Object getNewValue(Update update, Exchanger<Update> exchanger, T t, Field field) throws InterruptedException {
+        Update newValueUpdate;
+        newValueUpdate = exchanger.exchange(null);
+        Object newValue = parseUpdate(field, newValueUpdate, t, false);
+        Update oldValueUpdate;
+        while (newValue == null) {
+            oldValueUpdate = newValueUpdate;
+            newValueUpdate = exchanger.exchange(null);
+            if (newValueUpdate.hasCallbackQuery()) {
+                if (isValueConfirmed(newValueUpdate)) {
+                    newValue = parseUpdate(field, newValueUpdate.hasCallbackQuery() ? oldValueUpdate : newValueUpdate, t, true);
+                }
+                else {
+                    Message message = new Message();
+                    message.setText("Then send another " + field.getName());
+                    botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
+                            message);
+                }
+                botConfig.deleteMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
+                        newValueUpdate.getCallbackQuery().getMessage().getMessageId());
+            }
+            else {
+                newValue = parseUpdate(field, newValueUpdate.hasCallbackQuery() ? oldValueUpdate : newValueUpdate, t, false);
+            }
+        }
+        return newValue;
+    }
+
+    private boolean isValueConfirmed(Update newValueUpdate) {
+        return !newValueUpdate.hasCallbackQuery() || newValueUpdate.getCallbackQuery().getData().contains("yes");
+    }
+
     private boolean isUserWantToSetField(Update update, Exchanger<Update> exchanger, Field field) throws InterruptedException {
         Update newValueUpdate;
         newValueUpdate = exchanger.exchange(null);
@@ -132,14 +162,14 @@ public abstract class Service<T extends Entity> {
             botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(), message);
             newValueUpdate = exchanger.exchange(null);
         }
-        if (newValueUpdate.getCallbackQuery().getData().contains(" no")) {
+        if (newValueUpdate.getCallbackQuery().getData().equals("no")) {
             botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
                     menuStorage.getMenu(MenuMode.valueOf("SET_" + entityClass.getSimpleName().toUpperCase() + "_" + field.getName().toUpperCase()), update));
             return false;
         }
         return true;
     }
-    protected Object parseUpdate(Field field, Update newValueUpdate) throws InterruptedException {
+    protected Object parseUpdate(Field field, Update newValueUpdate, T t, boolean ignoreValidation) throws InterruptedException {
         Object newValue;
             try {
                 if (field.getType().equals(File.class)) {
@@ -164,9 +194,6 @@ public abstract class Service<T extends Entity> {
                     newValue = LocalTime.parse(newValueUpdate.getMessage().getText());
                 } else if (field.getType().equals(int.class)) {
                     newValue = Integer.parseInt(newValueUpdate.getMessage().getText());
-                    if ((Integer)newValue < 1) {
-                        throw new NumberFormatException();
-                    }
                 } else if (field.getType().equals(Subject.class)) {
                     newValue = subjectRepository.get(parseUtil.getTargetId(newValueUpdate.getCallbackQuery().getData()));
                 } else {
@@ -183,6 +210,11 @@ public abstract class Service<T extends Entity> {
                 botConfig.sendMessage(newValueUpdate.getMessage().getChatId().toString(), message);
                 return null;
             }
+            Message inspectionResult = inspectValueSuitability(field.getType(), newValue, t);
+            if (inspectionResult != null && !ignoreValidation) {
+                botConfig.sendMessage(newValueUpdate.getMessage().getChatId().toString(), inspectionResult);
+                return null;
+            }
         return newValue;
     }
     protected void persistEntity(Update update, T t) {
@@ -196,7 +228,7 @@ public abstract class Service<T extends Entity> {
                 menuStorage.getMenu(MenuMode.valueOf(entityClass.getSimpleName().toUpperCase() + "_MANAGE_MENU"),
                         update, t.getId()));
     }
-    private void updateEntity(Update update, T t, Field field, Object newValue) throws IllegalAccessException {
+    protected void updateEntity(Update update, T t, Field field, Object newValue) throws IllegalAccessException {
         field.setAccessible(true);
         field.set(t, newValue);
 

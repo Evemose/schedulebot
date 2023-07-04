@@ -18,21 +18,17 @@ import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.MenuStorage;
 import bot.schedulebot.util.*;
 import bot.schedulebot.util.generators.KeyboardGenerator;
-
-import java.lang.reflect.Field;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.stream.Collectors;
 import org.hibernate.Session;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+
+import java.lang.reflect.Field;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class NotificationService extends bot.schedulebot.services.Service<Notification> {
@@ -95,9 +91,9 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
         };
     }
     @Override
-    protected Object parseUpdate(Field field, Update update) throws InterruptedException{
+    protected Object parseUpdate(Field field, Update update, Notification t, boolean ignoreValidation) throws InterruptedException{
         try {
-            return super.parseUpdate(field, update);
+            return super.parseUpdate(field, update, t, ignoreValidation);
         } catch (NullPointerException e) {
             if (field.getType().equals(LocalDate.class)) {
                 return LocalDate.parse(update.getCallbackQuery().getData().replace("Notification ", ""));
@@ -129,5 +125,37 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
         Session session = HibernateConfig.getSession();
         startTimer(notificationRepository.get(notification.getId(), session));
         session.close();
+    }
+
+    @Override
+    protected void updateEntity(Update update, Notification notification, Field field, Object newValue) throws IllegalAccessException {
+        super.updateEntity(update, notification, field, newValue);
+        timersStorage.getRepeatedNotificationTimers().get(notification.getId()).cancel();
+        Session session = HibernateConfig.getSession();
+        startTimer(notificationRepository.get(notification.getId(), session));
+        session.close();
+    }
+
+    @Override
+    protected Message getFieldMessage(String fieldName, Update update) {
+        if (!Objects.equals(fieldName, "date")) {
+            return super.getFieldMessage(fieldName, update);
+        } else {
+            return menuStorage.getMenu(MenuMode.NOTIFICATION_START, update);
+        }
+    }
+
+    @Override
+    protected Message inspectValueSuitability(Class<?> fieldType, Object value, Notification t) {
+        Message message = new Message();
+        if (fieldType.equals(LocalDate.class) && ((LocalDate)value).isBefore(LocalDate.now())) {
+            message.setText("Date cannot be before today");
+            return message;
+        }
+        else if (fieldType.equals(int.class) && (int)value < 1) {
+            message.setText("Frequency cannot be less than 1");
+            return message;
+        }
+        return super.inspectValueSuitability(fieldType, value, t);
     }
 }

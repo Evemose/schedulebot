@@ -217,11 +217,16 @@ public class KeyboardGenerator {
     public List<List<InlineKeyboardButton>> getOutdatedUnappointedTasksKeyboard(TodayTasksInfo todayTasksInfo) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        todayTasksInfo.getOutdatedUnappointedTasks().stream().forEach(unappointedTask -> {
+        todayTasksInfo.getOutdatedUnappointedTasks().forEach(unappointedTask -> {
             keyboard.add(createSingleButtonRow(unappointedTask.getTask().getName(), "Show appointment (noback) " + unappointedTask.getId()));
         });
         keyboard.add(createSingleButtonRow("Back", "Show tasks for today " + todayTasksInfo.getId()));
 
         return keyboard;
     }
+
+    public List<List<InlineKeyboardButton>> getYesNoKeyboard() {
+        return List.of(createManyButtonsRow(List.of("Yes", "No"), List.of("yes", "no")));
+    }
+
 }

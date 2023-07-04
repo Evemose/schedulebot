@@ -2,7 +2,6 @@ package bot.schedulebot.objectsunderconstruction;
 
 
 import lombok.Getter;
-import lombok.Setter;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.HashMap;
