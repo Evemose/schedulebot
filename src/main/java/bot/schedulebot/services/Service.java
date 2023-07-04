@@ -4,6 +4,7 @@ import bot.schedulebot.config.BotConfig;
 import bot.schedulebot.entities.Entity;
 import bot.schedulebot.entities.File;
 import bot.schedulebot.entities.Subject;
+import bot.schedulebot.entities.User;
 import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.exceptions.NoFileInUpdateException;
@@ -11,12 +12,12 @@ import bot.schedulebot.objectsunderconstruction.ObjectsUnderConstruction;
 import bot.schedulebot.repositories.FileRepository;
 import bot.schedulebot.repositories.Repository;
 import bot.schedulebot.repositories.SubjectRepository;
+import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.storages.menustorages.MenuStorage;
 import bot.schedulebot.util.ClassFieldsStorage;
 import bot.schedulebot.util.Converter;
 import bot.schedulebot.util.ParseUtil;
 import bot.schedulebot.util.ThreadUtil;
-import org.hibernate.Session;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
@@ -43,9 +44,10 @@ public abstract class Service<T extends Entity> {
     private final Class<?> entityClass;
     private final ClassFieldsStorage classFieldsStorage;
     private final SubjectRepository subjectRepository;
-    abstract public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, T entity);
+    private final UserRepository userRepository;
+    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, T entity) {return null;}
 
-    void handleAdditionStart(Update update) {
+    public void handleAdditionStart(Update update) {
 
     }
 
@@ -124,7 +126,6 @@ public abstract class Service<T extends Entity> {
                             update));
         }
     }
-
     private boolean isUserWantToSetField(Update update, Exchanger<Update> exchanger, Field field) throws InterruptedException {
         Update newValueUpdate;
         newValueUpdate = exchanger.exchange(null);
@@ -141,8 +142,7 @@ public abstract class Service<T extends Entity> {
         }
         return true;
     }
-
-    private Object parseUpdate(Field field, Update newValueUpdate) throws InterruptedException {
+    protected Object parseUpdate(Field field, Update newValueUpdate) throws InterruptedException {
         Object newValue;
             try {
                 if (field.getType().equals(File.class)) {
@@ -191,6 +191,10 @@ public abstract class Service<T extends Entity> {
     protected void persistEntity(Update update, T t) {
         repository.add(t);
         objectsUnderConstruction.getExchangers().remove(parseUtil.getTag(update));
+        User user = userRepository.get(parseUtil.getTag(update));
+        user.setMode("None");
+        user.setInstanceAdditionStage(InstanceAdditionStage.NONE);
+        userRepository.update(user);
         botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
                 menuStorage.getMenu(MenuMode.valueOf(entityClass.getSimpleName().toUpperCase() + "_MANAGE_MENU"),
                         update, t.getId()));
@@ -211,7 +215,7 @@ public abstract class Service<T extends Entity> {
                         update, parseUtil.getTargetId(update.getCallbackQuery().getData())));
     }
 
-    protected Service(Repository<T> repository, ThreadUtil threadUtil, ParseUtil parseUtil, ObjectsUnderConstruction<T> objectsUnderConstruction, MenuStorage menuStorage, Converter converter, FileRepository fileRepository, ClassFieldsStorage classFieldsStorage, SubjectRepository subjectRepository) {
+    protected Service(Repository<T> repository, ThreadUtil threadUtil, ParseUtil parseUtil, ObjectsUnderConstruction<T> objectsUnderConstruction, MenuStorage menuStorage, Converter converter, FileRepository fileRepository, ClassFieldsStorage classFieldsStorage, SubjectRepository subjectRepository, UserRepository userRepository) {
         this.repository = repository;
         this.threadUtil = threadUtil;
         this.parseUtil = parseUtil;
@@ -221,6 +225,7 @@ public abstract class Service<T extends Entity> {
         this.fileRepository = fileRepository;
         this.classFieldsStorage = classFieldsStorage;
         this.subjectRepository = subjectRepository;
+        this.userRepository = userRepository;
         botConfig = new BotConfig();
         entityClass = (Class<?>) ((ParameterizedType)(this.getClass().getGenericSuperclass())).getActualTypeArguments()[0];
     }

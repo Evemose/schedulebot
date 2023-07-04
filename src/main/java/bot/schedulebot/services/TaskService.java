@@ -43,7 +43,7 @@ public class TaskService extends Service<Task> {
     private final TasksUnderConstruction tasksUnderConstruction;
 
     protected TaskService(ClassFieldsStorage classFieldsStorage, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, TasksUnderConstruction taskAdditionHelper, SubjectRepository subjectRepository, UnappointedTaskRepository unappointedTaskRepository, MenuStorage menuStorage, TaskRepository taskRepository, AppointmentRepository appointmentRepository, Converter converter, FileRepository fileRepository, AppointmentsUnderConstruction appointmentsUnderConstruction, Notificator notificator, TodayTasksInfoService todayTasksInfoService, TodayTasksInfoRepository todayTasksInfoRepository, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, TasksUnderConstruction tasksUnderConstruction, ThreadUtil threadUtil) {
-        super(taskRepository, threadUtil, parseUtil, tasksUnderConstruction, menuStorage, converter, fileRepository, classFieldsStorage, subjectRepository);
+        super(taskRepository, threadUtil, parseUtil, tasksUnderConstruction, menuStorage, converter, fileRepository, classFieldsStorage, subjectRepository, userRepository);
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
         this.groupRepository = groupRepository;

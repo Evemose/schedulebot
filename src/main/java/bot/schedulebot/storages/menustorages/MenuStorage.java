@@ -58,6 +58,9 @@ public class MenuStorage {
             case NO_SUBJECTS_FOR_TASK_MENU -> {
                 return subjectMenuStorage.getNoSubjectsForTaskMenu(update);
             }
+            case SET_NOTIFICATION_TITLE -> {
+                return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.NOTIFICATION_TITLE, update);
+            }
             case NO_SUBJECTS_FOR_PERSONAL_APPOINTMENT -> {
                 return subjectMenuStorage.getNoSubjectForPersonalAppointmentMenu(update);
             }
@@ -287,7 +290,7 @@ public class MenuStorage {
             case SHOW_NOTIFICATIONS_IN_GROUP_MENU: {
                 return groupMenuStorage.getNotificationsInGroupMenu(targetId);
             }
-            case SHOW_NOTIFICATION_MENU: {
+            case NOTIFICATION_MANAGE_MENU: {
                 return notificationMenuStorage.getNotificationMenu(targetId);
             }
             case NOTIFICATION_EDIT_MENU: {

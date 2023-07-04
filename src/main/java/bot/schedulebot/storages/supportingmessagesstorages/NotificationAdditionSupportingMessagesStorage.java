@@ -22,7 +22,10 @@ public class NotificationAdditionSupportingMessagesStorage implements AdditionSu
                 return getStartOfAdditionMessage();
             }
             case NOTIFICATION_TEXT -> {
-                return getTextStageOfAdditionMessage(update);
+                return getTextStageOfAdditionMessage();
+            }
+            case NOTIFICATION_TITLE -> {
+                return getTitleStageOfAdditionMessage();
             }
             case NOTIFICATION_DATE -> {
                 return getDateStageOfAdditionMessage();
@@ -47,7 +50,7 @@ public class NotificationAdditionSupportingMessagesStorage implements AdditionSu
 
     private Message getTimeStageOfAdditionMessage() {
         Message message = new Message();
-        message.setText("Enter frequency (in days)");
+        message.setText("Enter text of notification");
         return message;
     }
 
@@ -57,16 +60,22 @@ public class NotificationAdditionSupportingMessagesStorage implements AdditionSu
         return message;
     }
 
-    private Message getTextStageOfAdditionMessage(Update update) {
+    private Message getTextStageOfAdditionMessage() {
         Message message = new Message();
-        message.setText("Choose day of current or next week when it will be sent first");
-        message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getNextSevenDaysKeyboard()));
+        message.setText("Enter title");
+        return message;
+    }
+
+    private Message getTitleStageOfAdditionMessage() {
+        Message message = new Message();
+        message.setText("Enter frequency (in days)");
         return message;
     }
 
     private Message getStartOfAdditionMessage() {
         Message message = new Message();
-        message.setText("Enter notification text");
+        message.setText("Choose day of current or next week when it will be sent first");
+        message.setReplyMarkup(new InlineKeyboardMarkup(keyboardGenerator.getNextSevenDaysKeyboard()));
         return message;
     }
 }

@@ -64,7 +64,7 @@ public class CallbackQueryHandler {
         User u = userRepository.get(update.getCallbackQuery().getFrom().getUserName());
         if (callbackData.startsWith("Add")) u.setMode("Add");
         else if (callbackData.startsWith("Change")) u.setMode("Edit");
-        if (!(callbackData.startsWith("Task") || (callbackData.startsWith("Announcement")))) {
+        if (!(callbackData.startsWith("Task") || callbackData.startsWith("Announcement") || callbackData.startsWith("Notification"))) {
             u.setInstanceAdditionStage(InstanceAdditionStage.NONE);
             userRepository.update(u);
         }
@@ -272,13 +272,11 @@ public class CallbackQueryHandler {
                     userRepository.update(u);
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.SHOW_NOTIFICATIONS_IN_GROUP_MENU, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Add notification to \\d+")) {
-                    u.setGroupMode(true);
-                    userRepository.update(u);
-                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_START, update, "Add"));
+                    notificationService.handleAdditionStart(update);
                 } else if (callbackData.matches("Notification \\d{4}-\\d{2}-\\d{2}")) {
-                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_DATE, update, "Add"));
+                    serviceController.handleAddition(InstanceAdditionStage.NOTIFICATION_START, update, "Add");
                 } else if (callbackData.matches("Show notification \\d+")) {
-                    resultMessagesList.add(menuStorage.getMenu(MenuMode.SHOW_NOTIFICATION_MENU, update, parseUtil.getTargetId(callbackData)));
+                    resultMessagesList.add(menuStorage.getMenu(MenuMode.NOTIFICATION_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Delete notification \\d+")) {
                     notificationService.handleNotificationDelete(callbackData, update, resultMessagesList, u);
                 } else if (callbackData.matches("Turn off notifications for \\d+")) {

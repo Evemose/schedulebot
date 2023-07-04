@@ -5,7 +5,6 @@ import bot.schedulebot.config.HibernateConfig;
 import bot.schedulebot.entities.Announcement;
 import bot.schedulebot.entities.Group;
 import bot.schedulebot.entities.User;
-import bot.schedulebot.enums.EditOrNew;
 import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.objectsunderconstruction.AnnouncementsUnderConstruction;
@@ -39,7 +38,7 @@ public class AnnouncementService extends Service<Announcement> {
     private final TextGenerator textGenerator;
 
     protected AnnouncementService(ClassFieldsStorage classFieldsStorage, AnnouncementsUnderConstruction announcementsUnderConstruction, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, MenuStorage menuStorage, Converter converter, AnnouncementRepository announcementRepository, Notificator notificator, FileRepository fileRepository, ThreadUtil threadUtil, TextGenerator textGenerator) {
-        super(announcementRepository, threadUtil, parseUtil, announcementsUnderConstruction, menuStorage, converter, fileRepository, classFieldsStorage, null);
+        super(announcementRepository, threadUtil, parseUtil, announcementsUnderConstruction, menuStorage, converter, fileRepository, classFieldsStorage, null, userRepository);
         this.announcementsUnderConstruction = announcementsUnderConstruction;
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;

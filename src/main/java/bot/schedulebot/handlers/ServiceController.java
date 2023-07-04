@@ -69,8 +69,8 @@ public class ServiceController {
                     } else if (instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
                         announcementsUnderConstruction.getExchangers().get(parseUtil.getTag(update)).exchange(update);
                     } else if (instanceAdditionStage.toString().startsWith("NOTIFICATION")) {
-                        messages = notificationService.handleAddition(instanceAdditionStage, update, null);
-                    }
+                        notificationsUnderConstruction.getExchangers().get(parseUtil.getTag(update)).exchange(update);
+                    } else throw new IllegalStateException("Unexpected value: " + instanceAdditionStage);
                 }
             else {
                 if (instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
