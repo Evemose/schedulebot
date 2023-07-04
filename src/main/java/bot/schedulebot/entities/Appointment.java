@@ -24,7 +24,7 @@ public class Appointment implements Serializable, Entity {
     private Task task;
 
     @Column(name = "appointed_date")
-    private LocalDate appointedDate;
+    private LocalDate date;
 
     @ManyToOne(cascade = {CascadeType.REMOVE, CascadeType.REFRESH, CascadeType.MERGE})
     @JoinTable(name = "groups_appointments",
@@ -38,4 +38,13 @@ public class Appointment implements Serializable, Entity {
             joinColumns = @JoinColumn(name = "appointment_id", unique = true),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private User user;
+
+    public Appointment() {
+    }
+
+    public Appointment(UnappointedTask unappointedTask) {
+        this.task = unappointedTask.getTask();
+        this.group = unappointedTask.getTask().getGroup();
+        this.user = unappointedTask.getUser();
+    }
 }

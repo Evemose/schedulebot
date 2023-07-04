@@ -7,10 +7,8 @@ package bot.schedulebot.services;
 
 import bot.schedulebot.config.BotConfig;
 import bot.schedulebot.config.HibernateConfig;
-import bot.schedulebot.entities.Group;
 import bot.schedulebot.entities.Notification;
 import bot.schedulebot.entities.User;
-import bot.schedulebot.enums.EditOrNew;
 import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.objectsunderconstruction.NotificationsUnderConstruction;
@@ -22,11 +20,8 @@ import bot.schedulebot.util.*;
 import bot.schedulebot.util.generators.KeyboardGenerator;
 
 import java.lang.reflect.Field;
-import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -52,7 +47,7 @@ public class NotificationService extends bot.schedulebot.services.Service<Notifi
     private final TimersStorage timersStorage;
 
     protected NotificationService(NotificationsUnderConstruction notificationsUnderConstruction, Converter converter, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, GroupRepository groupRepository, NotificationRepository notificationRepository, KeyboardGenerator keyboardGenerator, TimersStorage timersStorage, ThreadUtil threadUtil, ClassFieldsStorage classFieldsStorage) {
-        super(notificationRepository, threadUtil, parseUtil, notificationsUnderConstruction, menuStorage, converter, null, classFieldsStorage, null, userRepository);
+        super(notificationRepository, threadUtil, parseUtil, notificationsUnderConstruction, menuStorage, converter, classFieldsStorage, null, userRepository);
         this.notificationsUnderConstruction = notificationsUnderConstruction;
         this.parseUtil = parseUtil;
         this.userRepository = userRepository;

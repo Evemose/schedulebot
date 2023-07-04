@@ -50,7 +50,7 @@ public class ClassFieldsStorage {
     private static Predicate<Field> getEntityPropertiesFilter() {
         return field ->
                 (field.getType().isPrimitive() && !field.getName().equals("id") && !field.getType().equals(boolean.class))
-                        || field.getType().equals(String.class)
+                        || field.getType().equals(String.class) && !field.getName().equals("code")
                         || field.getType().equals(LocalDate.class)
                         || field.getType().equals(LocalTime.class)
                         || field.getType().equals(File.class)

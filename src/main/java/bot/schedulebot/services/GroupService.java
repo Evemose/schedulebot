@@ -19,6 +19,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service
@@ -37,7 +38,7 @@ public class GroupService extends Service<Group> {
     private final BotConfig botConfig;
 
     protected GroupService(ClassFieldsStorage classFieldsStorage, UserRepository userRepository, GroupRepository groupRepository, MenuStorage menuStorage, GroupsUnderConstruction groupAdditionHelper, ParseUtil parseUtil, TaskService taskService, SubjectRepository subjectRepository, AnnouncementRepository announcementRepository, TimersStorage timersStorage, Converter converter, NotificationRepository notificationRepository, ThreadUtil threadUtil) {
-        super(groupRepository, threadUtil, parseUtil, groupAdditionHelper, menuStorage, converter, null, classFieldsStorage, subjectRepository, userRepository);
+        super(groupRepository, threadUtil, parseUtil, groupAdditionHelper, menuStorage, converter, classFieldsStorage, subjectRepository, userRepository);
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.menuStorage = menuStorage;
@@ -51,19 +52,19 @@ public class GroupService extends Service<Group> {
         botConfig = new BotConfig();
     }
 
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Group entity) {
+    private List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Group entity) {
         List<Message> messages = new ArrayList<>();
         Session session = HibernateConfig.getSession();
         User user = userRepository.get(parseUtil.getTag(update), session);
         switch (instanceAdditionStage) {
             case GROUP_START -> {
                 handleGroupAdditionStart(user, session);
-                messages.add(menuStorage.getMenu(MenuMode.CREATE_GROUP_FORM, update));
+                messages.add(menuStorage.getMenu(MenuMode.GROUP_START, update));
             }
             case GROUP_NAME -> {
                 handleGroupNameSet(update, user, session);
                 messages.add(menuStorage.getMenu(MenuMode.SET_GROUP_NAME, update));
-                messages.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, user.getGroups().get(user.getGroups().size() - 1).getId()));
+                messages.add(menuStorage.getMenu(MenuMode.GROUP_MANAGE_MENU, update, user.getGroups().get(user.getGroups().size() - 1).getId()));
             }
             default -> throw new RuntimeException("Group subject addition stage");
         }
@@ -76,7 +77,7 @@ public class GroupService extends Service<Group> {
         Message message;
         if (tryAddUser(userRepository.get(parseUtil.getTag(update)).getId(), update.getMessage().getText())) {
             Group group = groupRepository.getAll(session).stream().filter(group1 -> group1.getCode().equals(update.getMessage().getText())).collect(Collectors.toList()).get(0);
-            message = menuStorage.getMenu(MenuMode.GROUP_MENU, update, group.getId());
+            message = menuStorage.getMenu(MenuMode.GROUP_MANAGE_MENU, update, group.getId());
         } else {
             message = new Message();
             if (groupRepository.get(update.getMessage().getText(), session) == null) {
@@ -118,6 +119,23 @@ public class GroupService extends Service<Group> {
     private void transferOwnership(int groupId, int newOwnerId, int oldOwnerId) {
         groupRepository.updateUserRole(newOwnerId, Role.OWNER, groupId);
         groupRepository.updateUserRole(oldOwnerId, Role.ADMIN, groupId);
+    }
+
+    @Override
+    public void handleAdditionStart(Update update) {
+        User u = userRepository.get(parseUtil.getTag(update));
+        u.setMode("Add");
+        u.setInstanceAdditionStage(InstanceAdditionStage.GROUP_NAME);
+        userRepository.update(u);
+        addEntity(update, new Group());
+    }
+
+    @Override
+    protected void persistEntity(Update update, Group group) {
+        User user = userRepository.get(parseUtil.getTag(update));
+        group.setUsers(List.of(user));
+        group.setUserRoles(Map.of(user, Role.OWNER));
+        super.persistEntity(update, group);
     }
 
     private void kickUser(int groupId, int userId) {
@@ -167,7 +185,7 @@ public class GroupService extends Service<Group> {
         message.setText("*Ownership transferred.*\nYou are admin now");
         botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
         resultMessagesList.add(message);
-        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData)));
+        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
         session.close();
     }
 
@@ -177,7 +195,7 @@ public class GroupService extends Service<Group> {
         message.setText("User kicked");
         botConfig.deleteMessage(u.getChatId(), update.getCallbackQuery().getMessage().getMessageId());
         resultMessagesList.add(message);
-        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData)));
+        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
     }
 
     public void handleAdminRemoval(Update update, List<Message> resultMessagesList, String callbackData) {
@@ -185,7 +203,7 @@ public class GroupService extends Service<Group> {
         removeAdmin(parseUtil.getTargetId(callbackData), parseUtil.getTargetId(callbackData, 2));
         message.setText("Admin removed");
         resultMessagesList.add(message);
-        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData)));
+        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
     }
 
     public void handleAdminAddition(Update update, List<Message> resultMessagesList, String callbackData) {
@@ -193,7 +211,7 @@ public class GroupService extends Service<Group> {
         addAdmin(parseUtil.getTargetId(callbackData), parseUtil.getTargetId(callbackData, 2));
         message.setText("Admin added");
         resultMessagesList.add(message);
-        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData)));
+        resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
     }
 
     public void handleGroupDelete(Update update, List<Message> resultMessagesList, String callbackData, User u) {

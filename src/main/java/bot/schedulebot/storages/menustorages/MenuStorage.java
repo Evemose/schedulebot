@@ -70,7 +70,7 @@ public class MenuStorage {
             case SUBJECT_START -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.SUBJECT_START, update);
             }
-            case CREATE_GROUP_FORM -> {
+            case GROUP_START -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.GROUP_START, update);
             }
             case SET_GROUP_NAME -> {
@@ -100,7 +100,7 @@ public class MenuStorage {
             case JOIN_GROUP -> {
                 return groupMenuStorage.getGroupJoinMenu();
             }
-            case APPOINT_TASK -> {
+            case APPOINTMENT_START -> {
                 return instanceAdditionSupportingMessagesStorage.getMessageByStage(InstanceAdditionStage.APPOINTMENT_START, update);
             }
             case SET_APPOINTMENT_DATE -> {
@@ -174,7 +174,7 @@ public class MenuStorage {
             case GROUPS_MENU: {
                 return groupMenuStorage.getGroupsMenu(targetId);
             }
-            case GROUP_MENU: {
+            case GROUP_MANAGE_MENU: {
                 return groupMenuStorage.getGroupMenu(targetId, update);
             }
             case GROUP_USERS_LIST: {
@@ -217,7 +217,7 @@ public class MenuStorage {
             case SHOW_UNAPPOINTED_TASK: {
                 return unappointedTaskMenuStorage.getUnappointedTaskMenu(targetId, update, !update.hasCallbackQuery() || !update.getCallbackQuery().getData().contains("(noback)"));
             }
-            case SHOW_APPOINTMENT: {
+            case APPOINTMENT_MANAGE_MENU: {
                 return appointmentMenuStorage.getAppointmentMenu(targetId, update, !update.hasCallbackQuery() || !update.getCallbackQuery().getData().contains("(noback)"), userRepository.get(parseUtil.getTag(update)).isGroupMode());
             }
             case MARK_APPOINTMENT_AS_DONE: {

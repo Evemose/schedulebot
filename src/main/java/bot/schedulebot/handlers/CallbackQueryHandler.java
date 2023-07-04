@@ -76,10 +76,7 @@ public class CallbackQueryHandler {
                 resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUPS_INDEX_MENU, update));
             }
             case "Create group" -> {
-                resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.GROUP_START, update, "Add"));
-                u.setMode("Add");
-                u.setInstanceAdditionStage(InstanceAdditionStage.GROUP_NAME);
-                userRepository.update(u);
+                groupService.handleAdditionStart(update);
             }
             case "Show group join menu" -> {
                 groupMenuStorage.handleGroupJoinMenuProvision(update, resultMessagesList);
@@ -103,7 +100,7 @@ public class CallbackQueryHandler {
             }
             default -> {
                 if (callbackData.matches("Show group \\d+")) {
-                    resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MENU, update, parseUtil.getTargetId(callbackData)));
+                    resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Show announcements menu in group \\d+")) {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_ANNOUNCEMENTS_MENU_MANAGE, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Show main menu of \\d+")) {
@@ -125,7 +122,8 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Add task to group \\d+")) {
                     taskService.handleAdditionStart(update);
                 } else if (callbackData.matches("Add appointment to \\d+")) {
-                    appointmentService.handleAppointmentAdditionInitiation(update, resultMessagesList, u);
+                    taskService.handlePersonalTaskAddition(update);
+                    //appointmentService.handleAdditionStart(update);
                 } else if (callbackData.matches("Show subjects in group \\d+")) {
                     u.setGroupMode(true);
                     userRepository.update(u);
@@ -163,13 +161,9 @@ public class CallbackQueryHandler {
                 } else if (callbackData.startsWith("Show unappointed task ")) {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.SHOW_UNAPPOINTED_TASK, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Appoint unappointed task in group \\d+")) {
-                    u.setGroupMode(true);
-                    userRepository.update(u);
-                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, "Add"));
+                    appointmentService.handleAdditionStart(update);
                 } else if (callbackData.matches("Appoint unappointed task of user \\d+")) {
-                    u.setGroupMode(false);
-                    userRepository.update(u);
-                    resultMessagesList.addAll(serviceController.handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, "Add"));
+                    appointmentService.handleAdditionStart(update);
                 } else if (callbackData.matches("Show unappointed tasks of \\d+")) {
                     u.setGroupMode(false);
                     userRepository.update(u);
@@ -179,11 +173,11 @@ public class CallbackQueryHandler {
                     userRepository.update(u);
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.USER_APPOINTMENTS_LIST, update, u.getId()));
                 } else if (callbackData.startsWith("Show appointment ")) {
-                    resultMessagesList.add(menuStorage.getMenu(MenuMode.SHOW_APPOINTMENT, update, parseUtil.getTargetId(callbackData)));
+                    resultMessagesList.add(menuStorage.getMenu(MenuMode.APPOINTMENT_MANAGE_MENU, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Mark appointment as done \\d+")) {
                     appointmentService.handleMarkAppointmentAsDone(update, resultMessagesList, callbackData, u);
                 } else if (callbackData.startsWith("Change appointed date")) {
-                    appointmentService.handleAppointmentDateChange(update, resultMessagesList, callbackData, u);
+                    appointmentService.handleAppointmentDateChange(update, callbackData, u);
                 } else if (callbackData.matches("Show subjects of \\d+")) {
                     u.setGroupMode(false);
                     userRepository.update(u);
@@ -209,7 +203,7 @@ public class CallbackQueryHandler {
                 } else if (callbackData.matches("Show announcements in group \\d+")) {
                     resultMessagesList.add(menuStorage.getMenu(MenuMode.GROUP_ANNOUNCEMENTS_MENU_VIEW, update, parseUtil.getTargetId(callbackData)));
                 } else if (callbackData.matches("Add personal task in \\d+ to \\d+")) {
-                    taskService.handlePersonalTaskAddition(update, callbackData, u);
+                    taskService.handleGroupPersonalTaskAddition(update, callbackData, u);
                 } else if (callbackData.matches("Add announcement to group \\d+")) {
                     announcementService.handleAdditionStart(u, update);
                 } else if (callbackData.startsWith("Show announcement")) {

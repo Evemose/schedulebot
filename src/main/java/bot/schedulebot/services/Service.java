@@ -9,7 +9,6 @@ import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
 import bot.schedulebot.exceptions.NoFileInUpdateException;
 import bot.schedulebot.objectsunderconstruction.ObjectsUnderConstruction;
-import bot.schedulebot.repositories.FileRepository;
 import bot.schedulebot.repositories.Repository;
 import bot.schedulebot.repositories.SubjectRepository;
 import bot.schedulebot.repositories.UserRepository;
@@ -40,12 +39,10 @@ public abstract class Service<T extends Entity> {
     private final ObjectsUnderConstruction<T> objectsUnderConstruction;
     private final MenuStorage menuStorage;
     private final Converter converter;
-    private final FileRepository fileRepository;
     private final Class<?> entityClass;
     private final ClassFieldsStorage classFieldsStorage;
     private final SubjectRepository subjectRepository;
     private final UserRepository userRepository;
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, T entity) {return null;}
 
     public void handleAdditionStart(Update update) {
 
@@ -214,15 +211,13 @@ public abstract class Service<T extends Entity> {
                 menuStorage.getMenu(MenuMode.valueOf(t.getClass().getSimpleName().toUpperCase() + "_EDIT_MENU"),
                         update, parseUtil.getTargetId(update.getCallbackQuery().getData())));
     }
-
-    protected Service(Repository<T> repository, ThreadUtil threadUtil, ParseUtil parseUtil, ObjectsUnderConstruction<T> objectsUnderConstruction, MenuStorage menuStorage, Converter converter, FileRepository fileRepository, ClassFieldsStorage classFieldsStorage, SubjectRepository subjectRepository, UserRepository userRepository) {
+    protected Service(Repository<T> repository, ThreadUtil threadUtil, ParseUtil parseUtil, ObjectsUnderConstruction<T> objectsUnderConstruction, MenuStorage menuStorage, Converter converter, ClassFieldsStorage classFieldsStorage, SubjectRepository subjectRepository, UserRepository userRepository) {
         this.repository = repository;
         this.threadUtil = threadUtil;
         this.parseUtil = parseUtil;
         this.objectsUnderConstruction = objectsUnderConstruction;
         this.menuStorage = menuStorage;
         this.converter = converter;
-        this.fileRepository = fileRepository;
         this.classFieldsStorage = classFieldsStorage;
         this.subjectRepository = subjectRepository;
         this.userRepository = userRepository;

@@ -5,10 +5,7 @@ import bot.schedulebot.config.HibernateConfig;
 import bot.schedulebot.entities.*;
 import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
-import bot.schedulebot.enums.TaskType;
 import bot.schedulebot.objectsunderconstruction.AppointmentsUnderConstruction;
-import bot.schedulebot.objectsunderconstruction.ObjectsUnderConstruction;
-import bot.schedulebot.objectsunderconstruction.TasksUnderConstruction;
 import bot.schedulebot.repositories.*;
 import bot.schedulebot.storages.menustorages.MenuStorage;
 import bot.schedulebot.util.ClassFieldsStorage;
@@ -20,18 +17,13 @@ import org.hibernate.Session;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
-import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 @org.springframework.stereotype.Service
 public class AppointmentService extends Service<Appointment> {
-    private final ObjectsUnderConstruction appointmentObjectsUnderConstruction;
+    private final AppointmentsUnderConstruction appointmentObjectsUnderConstruction;
     private final AppointmentRepository appointmentRepository;
     private final UnappointedTaskRepository unappointedTaskRepository;
     private final ParseUtil parseUtil;
@@ -42,12 +34,9 @@ public class AppointmentService extends Service<Appointment> {
     private final BotConfig botConfig;
     private final TodayTasksInfoService todayTasksInfoService;
     private final TaskRepository taskRepository;
-    private final TasksUnderConstruction tasksUnderConstruction;
-    private final AppointmentsUnderConstruction appointmentsUnderConstruction;
-    private final TaskService taskService;
 
-    protected AppointmentService(ClassFieldsStorage classFieldsStorage, AppointmentsUnderConstruction appointmentAdditionHelper, Converter converter, AppointmentRepository appointmentRepository, UnappointedTaskRepository unappointedTaskRepository, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, KeyboardGenerator keyboardGenerator, TodayTasksInfoRepository todayTasksInfoRepository, ThreadUtil threadUtil, TodayTasksInfoService todayTasksInfoService, TaskRepository taskRepository, TasksUnderConstruction tasksUnderConstruction, AppointmentsUnderConstruction appointmentsUnderConstruction, TaskService taskService) {
-        super(appointmentRepository, threadUtil, parseUtil, appointmentsUnderConstruction, menuStorage, converter, null, classFieldsStorage, null, userRepository);
+    protected AppointmentService(ClassFieldsStorage classFieldsStorage, AppointmentsUnderConstruction appointmentAdditionHelper, Converter converter, AppointmentRepository appointmentRepository, UnappointedTaskRepository unappointedTaskRepository, ParseUtil parseUtil, UserRepository userRepository, MenuStorage menuStorage, KeyboardGenerator keyboardGenerator, TodayTasksInfoRepository todayTasksInfoRepository, ThreadUtil threadUtil, TodayTasksInfoService todayTasksInfoService, TaskRepository taskRepository, AppointmentsUnderConstruction appointmentsUnderConstruction) {
+        super(appointmentRepository, threadUtil, parseUtil, appointmentsUnderConstruction, menuStorage, converter, classFieldsStorage, null, userRepository);
         this.appointmentObjectsUnderConstruction = appointmentAdditionHelper;
         this.appointmentRepository = appointmentRepository;
         this.unappointedTaskRepository = unappointedTaskRepository;
@@ -59,114 +48,30 @@ public class AppointmentService extends Service<Appointment> {
         botConfig = new BotConfig();
         this.todayTasksInfoService = todayTasksInfoService;
         this.taskRepository = taskRepository;
-        this.tasksUnderConstruction = tasksUnderConstruction;
-        this.appointmentsUnderConstruction = appointmentsUnderConstruction;
-        this.taskService = taskService;
+    }
+
+    void handleAdditionStart(Update update, UnappointedTask unappointedTask) {
+        User user = userRepository.get(parseUtil.getTag(update));
+        user.setMode("Add");
+        user.setInstanceAdditionStage(InstanceAdditionStage.APPOINTMENT_START);
+        userRepository.update(user);
+        addEntity(update, new Appointment(unappointedTask));
     }
 
     @Override
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Appointment entity) {
-        List<Message> messages = new ArrayList<>();
-
-        switch (instanceAdditionStage) {
-            case APPOINTMENT_START -> {
-                handleAppointmentAdditionStart(update);
-                messages.add(menuStorage.getMenu(MenuMode.APPOINT_TASK, update));
-            }
-            case APPOINTMENT_DATE -> {
-                Session session = HibernateConfig.getSession();
-                User user = userRepository.get(parseUtil.getTag(update), session);
-                Appointment appointment = (Appointment) appointmentObjectsUnderConstruction.getObjectsUnderConstructions().get(user.getTag());
-                try {
-                    handleAppointmentDateSet(update, user, appointment, session, messages);
-                } catch (DateTimeException e) {
-                    Message message = new Message();
-                    message.setText("Wrong date. Try again");
-                    messages.add(message);
-                }
-                if (!messages.isEmpty()) {
-                    session.close();
-                    break;
-                }
-                messages.add(menuStorage.getMenu(MenuMode.SET_APPOINTMENT_DATE, update));
-                messages.add(menuStorage.getMenu(MenuMode.SHOW_APPOINTMENT, update, appointment.getId()));
-                session.close();
-                appointmentObjectsUnderConstruction.getObjectsUnderConstructions().remove(parseUtil.getTag(update));
-            }
-            default -> throw new RuntimeException();
-        }
-
-        return messages;
-    }
-
-    private void handleAppointmentAdditionStart(Update update) {
+    public void handleAdditionStart(Update update) {
+        Session session = HibernateConfig.getSession();
         User user = userRepository.get(parseUtil.getTag(update));
-
-        if (!appointmentObjectsUnderConstruction.getObjectsUnderConstructions().containsKey(parseUtil.getTag(update))) {
-            Appointment appointment = new Appointment();
-            Task task = unappointedTaskRepository.get(parseUtil.getTargetId(update.getCallbackQuery().getData())).getTask();
-            appointment.setTask(task);
-            appointment.setUser(user);
-            appointment.setGroup(task.getGroup());
-            appointmentObjectsUnderConstruction.getObjectsUnderConstructions().put(update.getCallbackQuery().getFrom().getUserName(), appointment);
-        }
-        user.setInstanceAdditionStage(InstanceAdditionStage.APPOINTMENT_DATE);
-
+        user.setMode("Add");
+        user.setGroupMode(update.getCallbackQuery().getData().contains(" group "));
+        user.setInstanceAdditionStage(InstanceAdditionStage.APPOINTMENT_START);
         userRepository.update(user);
-
+        addEntity(update,
+                new Appointment(unappointedTaskRepository.get(parseUtil.getTargetId(update.getCallbackQuery().getData()),
+                        session)));
+        session.close();
     }
 
-    private void handleAppointmentDateSet(Update update, User user, Appointment appointment, Session session, List<Message> messages) {
-        if (appointment.getAppointedDate() == null || appointment.getId() == -1) {
-            appointment.setId(0);
-            appointment.setAppointedDate(LocalDate.parse(update.getMessage().getText(), DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-            if (appointment.getAppointedDate().isAfter(appointment.getTask().getDeadline())) {
-                messages.add(createYesNoKeyboard());
-                return;
-            }
-        }
-        if (appointment.getAppointedDate().isBefore(LocalDate.now())) {
-            appointment.setId(-1);
-            throw new DateTimeException("Invalid date");
-        }
-
-        appointmentObjectsUnderConstruction.getObjectsUnderConstructions().remove(user.getTag());
-        UnappointedTask unappointedTask = unappointedTaskRepository.getUnappointedTaskByTaskAndUser(appointment.getTask().getId(), user.getId());
-        appointmentRepository.add(appointment);
-
-        TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(user.getTag(), session);
-        try {
-            if (unappointedTask != null) // if appointment is personal unappointed task isn`t being created
-                unappointedTaskRepository.delete(unappointedTask.getId());
-        } catch (
-                DataIntegrityViolationException e) { // in case unappointed task is related to some TodayTasksInfo entity
-            todayTasksInfoService.resetTodayTasksInfo(todayTasksInfo);
-            unappointedTaskRepository.delete(unappointedTask.getId());
-        }
-        todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
-
-        user.setInstanceAdditionStage(InstanceAdditionStage.NONE);
-
-        userRepository.update(user, session);
-        //groupRepository.addGroupAppointment(appointment.getGroup().getId(), appointmentRepository.getAppointmentByTaskAndUser(appointment.getTask().getId(), user.getId()).getId());
-    }
-
-    private Message createYesNoKeyboard() {
-        Message message = new Message();
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<String> text = new ArrayList<>();
-        List<String> callbackData = new ArrayList<>();
-        text.add("Yes");
-        text.add("No");
-        callbackData.add("Task appointment yes");
-        callbackData.add("Task appointment no");
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        keyboard.add(keyboardGenerator.createManyButtonsRow(text, callbackData));
-        markup.setKeyboard(keyboard);
-        message.setText("Date is after deadline. Are you sure?");
-        message.setReplyMarkup(markup);
-        return message;
-    }
 
     private void markAppointmentAsDone(int id) {
         Session session = HibernateConfig.getSession();
@@ -188,29 +93,16 @@ public class AppointmentService extends Service<Appointment> {
         }
     }
 
-    public void handleAppointmentAdditionInitiation(Update update, List<Message> resultMessagesList, User u) {
-        Session session = HibernateConfig.getSession();
-        User user = userRepository.get(parseUtil.getTag(update), session);
-        user.setGroupMode(false);
-        userRepository.update(user, session);
-        tasksUnderConstruction.getTaskTypes().put(update.getCallbackQuery().getFrom().getUserName(), TaskType.PERSONAL);
-        if (user.getSubjects().isEmpty()) {
-            session.close();
-            resultMessagesList.add(menuStorage.getMenu(MenuMode.NO_SUBJECTS_FOR_PERSONAL_APPOINTMENT, update));
-        } else {
-            resultMessagesList.addAll(taskService.handleAddition(InstanceAdditionStage.TASK_START, update, null));
-            Appointment appointment = new Appointment();
-            appointment.setUser(u);
-            appointment.setTask(tasksUnderConstruction.getObjectsUnderConstructions().get(u.getTag()));
-            appointmentsUnderConstruction.getObjectsUnderConstructions().put(u.getTag(), appointment);
-        }
-    }
-
-    public void handleAppointmentDateChange(Update update, List<Message> resultMessagesList, String callbackData, User u) {
-        u.setGroupMode(callbackData.matches("Change appointed date \\(group\\) \\d+"));
+    public void handleAppointmentDateChange(Update update, String callbackData, User u) {
+        u.setGroupMode(callbackData.contains("group"));
+        u.setInstanceAdditionStage(InstanceAdditionStage.APPOINTMENT_START);
+        u.setMode("Add");
         userRepository.update(u);
-        resetAppointment(parseUtil.getTargetId(callbackData));
-        resultMessagesList.addAll(handleAddition(InstanceAdditionStage.APPOINTMENT_START, update, null));
+        int unappointedTaskId = resetAppointment(parseUtil.getTargetId(callbackData));
+        Session session = HibernateConfig.getSession();
+        UnappointedTask unappointedTask = unappointedTaskRepository.get(unappointedTaskId, session);
+        addEntity(update, new Appointment(unappointedTask));
+        session.close();
     }
 
     public void handleMarkAppointmentAsDone(Update update, List<Message> resultMessagesList, String callbackData, User u) {
@@ -228,13 +120,10 @@ public class AppointmentService extends Service<Appointment> {
         }
     }
 
-    private void resetAppointment(int id) {
+    private int resetAppointment(int id) {
         Session session = HibernateConfig.getSession();
         Appointment appointment = appointmentRepository.get(id, session);
-        UnappointedTask unappointedTask = new UnappointedTask();
-        unappointedTask.setUser(appointment.getUser());
-        unappointedTask.setGroup(appointment.getGroup());
-        unappointedTask.setTask(appointment.getTask());
+        UnappointedTask unappointedTask = new UnappointedTask(appointment);
         appointment.setId(-1);
         appointmentObjectsUnderConstruction.getObjectsUnderConstructions().put(appointment.getUser().getTag(), appointment);
         unappointedTaskRepository.add(unappointedTask);
@@ -250,6 +139,7 @@ public class AppointmentService extends Service<Appointment> {
             todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session1);
             session1.close();
         }
+        return unappointedTask.getId();
     }
 
     public void appointTaskForDeadline(List<Message> resultMessagesList, Update update) {
@@ -277,7 +167,7 @@ public class AppointmentService extends Service<Appointment> {
                 appointment.setTask(unappointedTask.getTask());
                 appointment.setGroup(unappointedTask.getGroup());
                 appointment.setUser(unappointedTask.getUser());
-                appointment.setAppointedDate(unappointedTask.getTask().getDeadline());
+                appointment.setDate(unappointedTask.getTask().getDeadline());
                 try {
                     unappointedTaskRepository.delete(parseUtil.getTargetId(callbackData));
                 } catch (DataIntegrityViolationException e) { // related to tasks info of use
@@ -285,11 +175,11 @@ public class AppointmentService extends Service<Appointment> {
                     unappointedTaskRepository.delete(parseUtil.getTargetId(callbackData), session);
                 }
                 appointmentRepository.add(appointment);
-                resultMessagesList.add(menuStorage.getMenu(MenuMode.SHOW_APPOINTMENT, update, appointment.getId()));
+                resultMessagesList.add(menuStorage.getMenu(MenuMode.APPOINTMENT_MANAGE_MENU, update, appointment.getId()));
             }
         } else { //in case task being appointed from appointment menu and not unappointed task menu
             appointment = appointmentRepository.get(parseUtil.getTargetId(callbackData), session);
-            appointment.setAppointedDate(appointment.getTask().getDeadline());
+            appointment.setDate(appointment.getTask().getDeadline());
             appointmentRepository.update(appointment);
             try {
                 botConfig.editMessage(u.getChatId(),
@@ -311,7 +201,7 @@ public class AppointmentService extends Service<Appointment> {
     public void appointTaskForTomorrow(Update update) {
         User u = userRepository.get(parseUtil.getTag(update));
         Appointment appointment = appointmentRepository.get(parseUtil.getTargetId(update.getCallbackQuery().getData()));
-        appointment.setAppointedDate(LocalDate.now().plusDays(1));
+        appointment.setDate(LocalDate.now().plusDays(1));
         appointmentRepository.update(appointment);
 
         Session session = HibernateConfig.getSession();
@@ -328,6 +218,15 @@ public class AppointmentService extends Service<Appointment> {
         } catch (RuntimeException e) {
             // in case current appointed date equals previous
         }
+    }
+
+    @Override
+    public void persistEntity(Update update, Appointment appointment) {
+        super.persistEntity(update, appointment);
+        Session session = HibernateConfig.getSession();
+        TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(parseUtil.getTag(update), session);
+        todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
+        session.close();
     }
 
 }

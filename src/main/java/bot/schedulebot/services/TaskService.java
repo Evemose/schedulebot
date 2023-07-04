@@ -41,9 +41,10 @@ public class TaskService extends Service<Task> {
     private final KeyboardGenerator keyboardGenerator;
     private final BotConfig botConfig;
     private final TasksUnderConstruction tasksUnderConstruction;
+    private final AppointmentService appointmentService;
 
-    protected TaskService(ClassFieldsStorage classFieldsStorage, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, TasksUnderConstruction taskAdditionHelper, SubjectRepository subjectRepository, UnappointedTaskRepository unappointedTaskRepository, MenuStorage menuStorage, TaskRepository taskRepository, AppointmentRepository appointmentRepository, Converter converter, FileRepository fileRepository, AppointmentsUnderConstruction appointmentsUnderConstruction, Notificator notificator, TodayTasksInfoService todayTasksInfoService, TodayTasksInfoRepository todayTasksInfoRepository, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, TasksUnderConstruction tasksUnderConstruction, ThreadUtil threadUtil) {
-        super(taskRepository, threadUtil, parseUtil, tasksUnderConstruction, menuStorage, converter, fileRepository, classFieldsStorage, subjectRepository, userRepository);
+    protected TaskService(ClassFieldsStorage classFieldsStorage, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, TasksUnderConstruction taskAdditionHelper, SubjectRepository subjectRepository, UnappointedTaskRepository unappointedTaskRepository, MenuStorage menuStorage, TaskRepository taskRepository, AppointmentRepository appointmentRepository, Converter converter, FileRepository fileRepository, AppointmentsUnderConstruction appointmentsUnderConstruction, Notificator notificator, TodayTasksInfoService todayTasksInfoService, TodayTasksInfoRepository todayTasksInfoRepository, TextGenerator textGenerator, KeyboardGenerator keyboardGenerator, TasksUnderConstruction tasksUnderConstruction, ThreadUtil threadUtil, AppointmentService appointmentService) {
+        super(taskRepository, threadUtil, parseUtil, tasksUnderConstruction, menuStorage, converter, classFieldsStorage, subjectRepository, userRepository);
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
         this.groupRepository = groupRepository;
@@ -63,6 +64,7 @@ public class TaskService extends Service<Task> {
         this.keyboardGenerator = keyboardGenerator;
         this.botConfig = new BotConfig();
         this.tasksUnderConstruction = tasksUnderConstruction;
+        this.appointmentService = appointmentService;
     }
 
     public void handleTaskDeletion(Update update, List<Message> resultMessagesList, String callbackData, User u) {
@@ -119,7 +121,7 @@ public class TaskService extends Service<Task> {
         session.close();
     }
 
-    public void handlePersonalTaskAddition(Update update, String callbackData, User u) {
+    public void handleGroupPersonalTaskAddition(Update update, String callbackData, User u) {
         Session session = HibernateConfig.getSession();
         Group group = groupRepository.get(parseUtil.getTargetId(update.getCallbackQuery().getData()), session);
         if (group.getSubjects().isEmpty()) {
@@ -135,11 +137,6 @@ public class TaskService extends Service<Task> {
         task.setTargetUser(userRepository.get(parseUtil.getTargetId(callbackData, 2)));
         session.close();
         addEntity(update, task);
-    }
-
-    @Override
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Task entity) {
-        return null;
     }
 
     public void handleAdditionStart(Update update) {
@@ -158,36 +155,65 @@ public class TaskService extends Service<Task> {
         session.close();
         addEntity(update, task);
     }
+
+    public void handlePersonalTaskAddition(Update update) {
+        Session session = HibernateConfig.getSession();
+        User user = userRepository.get(parseUtil.getTag(update), session);
+        user.setMode("Add");
+        user.setInstanceAdditionStage(InstanceAdditionStage.TASK_START);
+        user.setGroupMode(false);
+        userRepository.update(user, session);
+        if (user.getSubjects().isEmpty()) {
+            botConfig.sendMessage(update.getCallbackQuery().getMessage().getChatId().toString(), menuStorage.getMenu(MenuMode.NO_SUBJECTS_FOR_PERSONAL_APPOINTMENT, update));
+            return;
+        }
+        session.close();
+        addEntity(update, new Task());
+    }
     @Override
     protected void persistEntity(Update update, Task task) {
-        super.persistEntity(update, task);
         if (task.getGroup() != null) {
-            if (task.getTargetUser() != null) {
-                UnappointedTask unappointedTask = new UnappointedTask(task);
-                unappointedTask.setUser(task.getTargetUser());
-                unappointedTaskRepository.add(unappointedTask);
-                notificator.sendPersonalNotificationAboutNewTask(task.getTargetUser(), unappointedTask);
-                Session session = HibernateConfig.getSession();
-                todayTasksInfoService.updateTodayTasksInfo(todayTasksInfoRepository.get(task.getTargetUser().getTag(), session), session);
-                session.close();
-            } else {
-                Session session = HibernateConfig.getSession();
-                Group group = groupRepository.get(task.getGroup().getId(), session);
-                group.getUsers().forEach(user -> {
-                    UnappointedTask unappointedTask = new UnappointedTask(task);
-                    unappointedTask.setUser(user);
-                    unappointedTaskRepository.add(unappointedTask);
-                    if (!user.getTag().equals(parseUtil.getTag(update))) {
-                        notificator.sendPersonalNotificationAboutNewTask(user, unappointedTask);
-                    }
-                });
-                todayTasksInfoService.updateTodayTasksInfoInGroup(group.getId());
-                session.close();
-            }
+            persistGroupTask(update, task);
+            super.persistEntity(update, task);
         } else {
+            taskRepository.add(task);
+            persistPersonalTask(update, task);
+        }
+    }
+
+    private void persistPersonalTask(Update update, Task task) {
+        UnappointedTask unappointedTask = new UnappointedTask(task);
+        unappointedTask.setUser(userRepository.get(parseUtil.getTag(update)));
+        unappointedTaskRepository.add(unappointedTask);
+        Session session = HibernateConfig.getSession();
+        TodayTasksInfo todayTasksInfo = todayTasksInfoRepository.get(parseUtil.getTag(update), session);
+        todayTasksInfoService.updateTodayTasksInfo(todayTasksInfo, session);
+        session.close();
+        appointmentService.handleAdditionStart(update, unappointedTask);
+    }
+
+    private void persistGroupTask(Update update, Task task) {
+        if (task.getTargetUser() != null) {
             UnappointedTask unappointedTask = new UnappointedTask(task);
-            unappointedTask.setUser(userRepository.get(parseUtil.getTag(update)));
+            unappointedTask.setUser(task.getTargetUser());
             unappointedTaskRepository.add(unappointedTask);
+            notificator.sendPersonalNotificationAboutNewTask(task.getTargetUser(), unappointedTask);
+            Session session = HibernateConfig.getSession();
+            todayTasksInfoService.updateTodayTasksInfo(todayTasksInfoRepository.get(task.getTargetUser().getTag(), session), session);
+            session.close();
+        } else {
+            Session session = HibernateConfig.getSession();
+            Group group = groupRepository.get(task.getGroup().getId(), session);
+            group.getUsers().forEach(user -> {
+                UnappointedTask unappointedTask = new UnappointedTask(task);
+                unappointedTask.setUser(user);
+                unappointedTaskRepository.add(unappointedTask);
+                if (!user.getTag().equals(parseUtil.getTag(update))) {
+                    notificator.sendPersonalNotificationAboutNewTask(user, unappointedTask);
+                }
+            });
+            todayTasksInfoService.updateTodayTasksInfoInGroup(group.getId());
+            session.close();
         }
     }
 

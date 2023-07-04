@@ -46,7 +46,7 @@ public class TextGenerator {
 
         for (Appointment appointment :
                 appointments) {
-            text += appointment.getTask().getName() + "\nAppointed on: " + appointment.getAppointedDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) + "\n\n";
+            text += appointment.getTask().getName() + "\nAppointed on: " + appointment.getDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) + "\n\n";
         }
 
         return text;
@@ -131,7 +131,7 @@ public class TextGenerator {
                 "\n\n*Subject:* " + task.getSubject().getName() +
                 "\n\n*Description:* " + task.getDescription() +
                 "\n\n*Deadline:* " + task.getDeadline().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) +
-                "\n\n*Appointed on:* " + appointment.getAppointedDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+                "\n\n*Appointed on:* " + appointment.getDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
 
         session.close();
         return res;

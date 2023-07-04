@@ -172,7 +172,7 @@ public class KeyboardGenerator {
         keyboard.add(createSingleButtonRow("Change appointed date", "Change appointed date " + (appointment.getUser().isGroupMode() ? "(group) " : "(user) ") + appointment.getId()));
         if (!appointment.getTask().getDeadline().isBefore(LocalDate.now()))
             keyboard.add(createSingleButtonRow("Appoint for deadline", "Appoint for deadline " + (appointment.getUser().isGroupMode() ? "(group) " : "(user) ") + appointment.getId()));
-        keyboard.add(createSingleButtonRow((appointment.getAppointedDate().equals(LocalDate.now()) ? "Postpone " : "Appoint ") + "for tomorrow", "Postpone for tomorrow (group) " + appointment.getId()));
+        keyboard.add(createSingleButtonRow((appointment.getDate().equals(LocalDate.now()) ? "Postpone " : "Appoint ") + "for tomorrow", "Postpone for tomorrow (group) " + appointment.getId()));
         if (hasBackButton)
             keyboard.add(createSingleButtonRow("Back", "Show appointments " + (appointment.getUser().isGroupMode() ? "in group " + appointment.getGroup().getId() : "of " + appointment.getUser().getId())));
         else keyboard.addAll(getDeleteButtonKeyboard());

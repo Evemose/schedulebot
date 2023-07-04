@@ -34,7 +34,7 @@ public class SubjectService extends Service<Subject> {
     private final BotConfig botConfig;
 
     protected SubjectService(ClassFieldsStorage classFieldsStorage, UserRepository userRepository, SubjectRepository subjectRepository, Converter converter, ParseUtil parseUtil, MenuStorage menuStorage, GroupRepository groupRepository, SubjectsUnderConstruction subjectAdditionHelper, ThreadUtil threadUtil) {
-        super(subjectRepository, threadUtil, parseUtil, subjectAdditionHelper, menuStorage, converter, null, classFieldsStorage, subjectRepository, userRepository);
+        super(subjectRepository, threadUtil, parseUtil, subjectAdditionHelper, menuStorage, converter, classFieldsStorage, subjectRepository, userRepository);
         this.userRepository = userRepository;
         this.subjectRepository = subjectRepository;
         this.parseUtil = parseUtil;
@@ -69,8 +69,7 @@ public class SubjectService extends Service<Subject> {
         }
     }
 
-    @Override
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Subject entity) {
+    private List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Subject entity) {
         new Thread(() -> {
         try {
             threadUtil.scheduleThreadKill(Thread.currentThread());

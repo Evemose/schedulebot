@@ -3,10 +3,7 @@ package bot.schedulebot.handlers;
 import bot.schedulebot.entities.User;
 import bot.schedulebot.enums.InstanceAdditionStage;
 import bot.schedulebot.enums.MenuMode;
-import bot.schedulebot.objectsunderconstruction.AnnouncementsUnderConstruction;
-import bot.schedulebot.objectsunderconstruction.NotificationsUnderConstruction;
-import bot.schedulebot.objectsunderconstruction.SubjectsUnderConstruction;
-import bot.schedulebot.objectsunderconstruction.TasksUnderConstruction;
+import bot.schedulebot.objectsunderconstruction.*;
 import bot.schedulebot.repositories.UserRepository;
 import bot.schedulebot.services.*;
 import bot.schedulebot.storages.menustorages.MenuStorage;
@@ -22,34 +19,34 @@ import java.util.concurrent.Exchanger;
 
 @Controller
 public class ServiceController {
-    private final SubjectService subjectService;
     private final TaskService taskService;
     private final GroupService groupService;
-    private final Service appointmentService;
+    private final AppointmentService appointmentService;
     private final UserRepository userRepository;
     private final ParseUtil parseUtil;
-    private final MenuStorage menuStorage;
     private final AnnouncementService announcementService;
     private final NotificationService notificationService;
     private final SubjectsUnderConstruction subjectsUnderConstruction;
     private final AnnouncementsUnderConstruction announcementsUnderConstruction;
     private final TasksUnderConstruction tasksUnderConstruction;
     private final NotificationsUnderConstruction notificationsUnderConstruction;
+    private final GroupsUnderConstruction groupsUnderConstruction;
+    private final AppointmentsUnderConstruction appointmentsUnderConstruction;
 
-    public ServiceController(SubjectService subjectAdditionHandler, TaskService taskAdditionHandler, GroupService groupAdditionHandler, AppointmentService appointmentAdditionHandler, UserRepository userRepository, ParseUtil parseUtil, MenuStorage menuStorage, AnnouncementService announcementService, NotificationService notificationService, SubjectsUnderConstruction subjectsUnderConstruction, AnnouncementsUnderConstruction announcementsUnderConstruction, TasksUnderConstruction tasksUnderConstruction, NotificationsUnderConstruction notificationsUnderConstruction) {
-        this.subjectService = subjectAdditionHandler;
+    public ServiceController(TaskService taskAdditionHandler, GroupService groupAdditionHandler, AppointmentService appointmentAdditionHandler, UserRepository userRepository, ParseUtil parseUtil, AnnouncementService announcementService, NotificationService notificationService, SubjectsUnderConstruction subjectsUnderConstruction, AnnouncementsUnderConstruction announcementsUnderConstruction, TasksUnderConstruction tasksUnderConstruction, NotificationsUnderConstruction notificationsUnderConstruction, GroupsUnderConstruction groupsUnderConstruction, AppointmentsUnderConstruction appointmentsUnderConstruction) {
         this.taskService = taskAdditionHandler;
         this.groupService = groupAdditionHandler;
         this.appointmentService = appointmentAdditionHandler;
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
-        this.menuStorage = menuStorage;
         this.announcementService = announcementService;
         this.notificationService = notificationService;
         this.subjectsUnderConstruction = subjectsUnderConstruction;
         this.announcementsUnderConstruction = announcementsUnderConstruction;
         this.tasksUnderConstruction = tasksUnderConstruction;
         this.notificationsUnderConstruction = notificationsUnderConstruction;
+        this.groupsUnderConstruction = groupsUnderConstruction;
+        this.appointmentsUnderConstruction = appointmentsUnderConstruction;
     }
 
 
@@ -58,12 +55,11 @@ public class ServiceController {
         try {
             if (Objects.equals(mode, "Add")) {
                     if (instanceAdditionStage.toString().startsWith("SUBJECT")) {
-                        Exchanger<Update> exchanger = subjectsUnderConstruction.getExchangers().get(parseUtil.getTag(update));
-                        exchanger.exchange(update);
+                        subjectsUnderConstruction.getExchangers().get(parseUtil.getTag(update)).exchange(update);
                     } else if (instanceAdditionStage.toString().startsWith("GROUP")) {
-                        messages = groupService.handleAddition(instanceAdditionStage, update, null);
+                        groupsUnderConstruction.getExchangers().get(parseUtil.getTag(update)).exchange(update);
                     } else if (instanceAdditionStage.toString().startsWith("APPOINTMENT")) {
-                        messages = appointmentService.handleAddition(instanceAdditionStage, update, null);
+                        appointmentsUnderConstruction.getExchangers().get(parseUtil.getTag(update)).exchange(update);
                     } else if (instanceAdditionStage.toString().startsWith("TASK")) {
                         tasksUnderConstruction.getExchangers().get(parseUtil.getTag(update)).exchange(update);
                     } else if (instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
@@ -72,7 +68,7 @@ public class ServiceController {
                         notificationsUnderConstruction.getExchangers().get(parseUtil.getTag(update)).exchange(update);
                     } else throw new IllegalStateException("Unexpected value: " + instanceAdditionStage);
                 }
-            else {
+            else if (Objects.equals(mode, "Edit")) {
                 if (instanceAdditionStage.toString().startsWith("ANNOUNCEMENT")) {
                     Exchanger<Update> exchanger = announcementsUnderConstruction.getEditExchangers().get(parseUtil.getTag(update));
                     exchanger.exchange(update);
@@ -91,6 +87,7 @@ public class ServiceController {
                     throw new IllegalStateException("Unexpected value: " + instanceAdditionStage);
                 }
             }
+            else throw new IllegalStateException("Unexpected mode: " + mode);
         } catch (InterruptedException ignored) {
         }
         return messages;

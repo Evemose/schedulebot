@@ -7,7 +7,6 @@ import bot.schedulebot.repositories.GroupRepository;
 import bot.schedulebot.repositories.TodayTasksInfoRepository;
 import bot.schedulebot.storages.menustorages.AppointmentMenuStorage;
 import bot.schedulebot.storages.menustorages.UnappointedTaskMenuStorage;
-import bot.schedulebot.util.ClassFieldsStorage;
 import bot.schedulebot.util.generators.KeyboardGenerator;
 import bot.schedulebot.util.generators.TextGenerator;
 import org.hibernate.Session;
@@ -55,7 +54,7 @@ public class TodayTasksInfoService {
             List<UnappointedTask> unappointedTasks = user.getUnappointedTasks();
 
             todayTasksInfo.setAppointmentsForToday(appointments.stream()
-                    .filter(appointment -> appointment.getAppointedDate().isEqual(LocalDate.now()))
+                    .filter(appointment -> appointment.getDate().isEqual(LocalDate.now()))
                     .toList());
             todayTasksInfo.setAppointmentsWithDeadlineToday(appointments.stream()
                     .filter(appointment -> appointment.getTask().getDeadline().isEqual(LocalDate.now()) && !todayTasksInfo.getAppointmentsForToday().contains(appointment))
@@ -67,7 +66,7 @@ public class TodayTasksInfoService {
                     .filter(unappointedTask -> unappointedTask.getTask().getDeadline().isBefore(LocalDate.now()))
                     .toList());
             todayTasksInfo.setOutdatedAppointments(appointments.stream()
-                    .filter(appointment -> appointment.getAppointedDate().isBefore(LocalDate.now()))
+                    .filter(appointment -> appointment.getDate().isBefore(LocalDate.now()))
                     .toList());
 
             todayTasksInfoRepository.update(todayTasksInfo, session);

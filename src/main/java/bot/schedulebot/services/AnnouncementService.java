@@ -38,7 +38,7 @@ public class AnnouncementService extends Service<Announcement> {
     private final TextGenerator textGenerator;
 
     protected AnnouncementService(ClassFieldsStorage classFieldsStorage, AnnouncementsUnderConstruction announcementsUnderConstruction, UserRepository userRepository, ParseUtil parseUtil, GroupRepository groupRepository, MenuStorage menuStorage, Converter converter, AnnouncementRepository announcementRepository, Notificator notificator, FileRepository fileRepository, ThreadUtil threadUtil, TextGenerator textGenerator) {
-        super(announcementRepository, threadUtil, parseUtil, announcementsUnderConstruction, menuStorage, converter, fileRepository, classFieldsStorage, null, userRepository);
+        super(announcementRepository, threadUtil, parseUtil, announcementsUnderConstruction, menuStorage, converter, classFieldsStorage, null, userRepository);
         this.announcementsUnderConstruction = announcementsUnderConstruction;
         this.userRepository = userRepository;
         this.parseUtil = parseUtil;
@@ -52,8 +52,7 @@ public class AnnouncementService extends Service<Announcement> {
         this.textGenerator = textGenerator;
     }
 
-    @Override
-    public List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Announcement entity) { return null; }
+    private List<Message> handleAddition(InstanceAdditionStage instanceAdditionStage, Update update, Announcement entity) { return null; }
 
 
     @Override

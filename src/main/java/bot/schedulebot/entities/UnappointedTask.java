@@ -41,6 +41,12 @@ public class UnappointedTask implements Entity, Serializable {
     public UnappointedTask() {
     }
 
+    public UnappointedTask(Appointment appointment) {
+        this.task = appointment.getTask();
+        this.group = appointment.getGroup();
+        this.user = appointment.getUser();
+    }
+
     public UnappointedTask(Task task) {
         this.task = task;
         this.group = task.getGroup();
